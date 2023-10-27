@@ -1,3 +1,4 @@
+library(prais)
 library(dplyr)
 library(ggplot2)
 library(ggeffects)
@@ -12,6 +13,9 @@ data <- readRDS("data/elects_unique_cee.rds") %>%
                country_name %in% c("Estonia", "Lithuania", "Latvia", "Poland", 
                                    "Bulgaria", "Slovakia") ~ "Never stable region"
            )) %>% 
+    group_by(country_name) %>% 
+    mutate(election_no = row_number()) %>% 
+    ungroup %>% 
     group_by(country_name, post_crisis) %>% 
     mutate(
         post_crisis_election2 = case_when(
@@ -47,56 +51,75 @@ data <- readRDS("data/elects_unique_cee.rds") %>%
 # np_share_cv_1 = úplně nové strany
 # np_share_pnp_1 = částečně nové strany
 
+# library(prais)
+# prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
+#               index = c("election_year", "country_name_short"),
+#               data = data, panelwise = TRUE)
+
+used_data <- data %>% 
+    filter(!is.na(np_share_nc_1)) %>% 
+    mutate(country_name_short = factor(country_name_short))
+
 # Tab 1
-m1a <- lm_robust(np_share_nc_1 ~ r_year, data = data, 
-                 clusters = country_name_short)
-m1b <- lm_robust(np_share_nc_1 ~ r_year + crisis_election, 
-                 data = data, clusters = country_name_short)
+m1a_pw <- prais_winsten(np_share_nc_1 ~ r_year, data = used_data, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+m1b_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
+              data = used_data, index = c("country_name_short", "year"), 
+              twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+m2a_pw <- prais_winsten(np_share_cv_1 ~ r_year, data = used_data, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+m2b_pw <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election, 
+                        data = used_data, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+m3a_pw <- prais_winsten(np_share_pnp_1 ~ r_year, data = used_data, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+m3b_pw <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election, 
+                        data = used_data, index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
 
-m2a <- lm_robust(np_share_cv_1 ~ r_year, data = data, 
-                 clusters = country_name_short)
-m2b <- lm_robust(np_share_cv_1 ~ r_year + crisis_election, 
-                 data = data, clusters = country_name_short)
-
-m3a <- lm_robust(np_share_pnp_1 ~ r_year, data = data, 
-                 clusters = country_name_short)
-m3b <- lm_robust(np_share_pnp_1 ~ r_year + crisis_election, 
-                 data = data, clusters = country_name_short)
-
+PW_NOTE <- "Models estimated using Prais-Winsten estimator."
 modelsummary::modelsummary(
-    list("All new parties" = m1a, 
-         "All new parties" = m1b, 
-         "Genuinely new parties" = m2a, 
-         "Genuinely new parties" = m2b, 
-         "Partially new parties" = m3a, 
-         "Partially new parties" = m3b), 
+    list("All new parties" = m1a_pw, 
+         "All new parties" = m1b_pw, 
+         "Genuinely new parties" = m2a_pw, 
+         "Genuinely new parties" = m2b_pw, 
+         "Partially new parties" = m3a_pw, 
+         "Partially new parties" = m3b_pw), 
     coef_rename = c(
         "r_year"="Year (0 = 1991)", 
         "crisis_election"="Two elections after 2008"
     ),
-    gof_omit = "Std.Errors", # Omit "Std.Errors" clustered
-    stars = TRUE
-    # output = "figs/tab1.html"
+    stars = TRUE, 
+    notes = PW_NOTE,
+    output = "figs/tab1.html"
 )
 
-m7 <- lm_robust(np_share_nc_1 ~ r_year + crisis_election, 
-                data = data %>% filter(region_type == "Never stable region"), 
-                clusters = country_name_short)
-m8 <- lm_robust(np_share_nc_1 ~ r_year + crisis_election, 
-                data = data %>% filter(region_type == "Once stable region"), 
-                clusters = country_name_short)
-m9 <- lm_robust(np_share_nc_1 ~ r_year * region_type + crisis_election, 
-                data = data, 
-                clusters = country_name_short)
-m10 <- lm_robust(np_share_nc_1 ~ r_year + crisis_election * region_type, 
-                data = data, 
-                clusters = country_name_short)
+m7_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
+                       data = used_data %>% filter(region_type == "Never stable region"), 
+                       index = c("country_name_short", "year"), 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+m8_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election,
+                       data = used_data %>% filter(region_type == "Once stable region"), 
+                       index = c("country_name_short", "year"), 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m9_pw <- prais_winsten(np_share_nc_1 ~ r_year * region_type + crisis_election,
+                       data = used_data, 
+                       index = c("country_name_short", "year"), 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m10_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * region_type,
+                       data = used_data, 
+                       index = c("country_name_short", "year"), 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
-    list("Never stable" = m7, 
-         "Once stable" = m8, 
-         "All" = m9, 
-         "All" = m10), 
+    list("Never stable" = m7_pw, 
+         "Once stable" = m8_pw, 
+         "All" = m9_pw, 
+         "All" = m10_pw), 
     coef_rename = c(
         "r_year"="Year (0 = 1991)", 
         "crisis_election"="Two elections after 2008", 
@@ -104,65 +127,86 @@ modelsummary::modelsummary(
         "r_year:region_typeOnce stable region" = "Year × Once stable region", 
         "crisis_election:region_typeOnce stable region" = "Two elections after 2008 × Once stable region"
     ),
-    stars = TRUE, 
-    gof_omit = "Std.Errors",
+    stars = TRUE,
+    notes = PW_NOTE,
     output = "figs/tab2.html"
 )
 
-## modely s pořadím voleb ---------------------------------
-m1a_2 <- lm_robust(np_share_nc_1 ~ rank_election_within_country, data = data, 
-                 clusters = country_name_short)
-m1b_2 <- lm_robust(np_share_nc_1 ~ rank_election_within_country + crisis_election, 
-                 data = data, clusters = country_name_short)
+## models with election order ---------------------------------
+m1a_2pw <- prais_winsten(np_share_nc_1 ~ rank_election_within_country,
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m1b_2pw <- prais_winsten(np_share_nc_1 ~ rank_election_within_country + crisis_election,
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-m2a_2 <- lm_robust(np_share_cv_1 ~ rank_election_within_country, data = data, 
-                 clusters = country_name_short)
-m2b_2 <- lm_robust(np_share_cv_1 ~ rank_election_within_country + crisis_election, 
-                 data = data, clusters = country_name_short)
+m2a_2pw <- prais_winsten(np_share_cv_1 ~ rank_election_within_country,
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m2b_2pw <- prais_winsten(np_share_cv_1 ~ rank_election_within_country + crisis_election, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-m3a_2 <- lm_robust(np_share_pnp_1 ~ rank_election_within_country, data = data, 
-                 clusters = country_name_short)
-m3b_2 <- lm_robust(np_share_pnp_1 ~ rank_election_within_country + crisis_election, 
-                 data = data, clusters = country_name_short)
+m3a_2pw <- prais_winsten(np_share_pnp_1 ~ rank_election_within_country,
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m3b_2pw <- prais_winsten(np_share_pnp_1 ~ rank_election_within_country + crisis_election, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
-    list("All new parties" = m1a_2, 
-         "All new parties" = m1b_2, 
-         "Genuinely new parties" = m2a_2, 
-         "Genuinely new parties" = m2b_2, 
-         "Partially new parties" = m3a_2, 
-         "Partially new parties" = m3b_2), 
+    list("All new parties" = m1a_2pw, 
+         "All new parties" = m1b_2pw, 
+         "Genuinely new parties" = m2a_2pw, 
+         "Genuinely new parties" = m2b_2pw, 
+         "Partially new parties" = m3a_2pw, 
+         "Partially new parties" = m3b_2pw), 
     coef_rename = c(
         "rank_election_within_country"="Election number", 
         "crisis_election"="Two elections after 2008"
     ),
     stars = TRUE, 
-    gof_omit = "Std.Errors",
-    output = "figs/election_rank_tab1.html"
+    notes = PW_NOTE,
+    output = "figs/tab1_election_rank.html"
 )
 
-## modely bez prvních a druhých voleb ----------------------
-data_after_2nd_election <- data %>% 
+## models without the first and second elections ----------------------
+data_after_2nd_election <- used_data %>% 
     filter(!fst_snd_election)
 
 # Tab 1
-m1a_thd <- lm_robust(np_share_nc_1 ~ r_year, data = data_after_2nd_election, 
-                 clusters = country_name_short)
-m1b_thd <- lm_robust(np_share_nc_1 ~ r_year + crisis_election, 
-                 data = data_after_2nd_election, 
-                 clusters = country_name_short)
+m1a_thd <- prais_winsten(np_share_nc_1 ~ r_year, 
+                         data = data_after_2nd_election, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m1b_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
+                         data = data_after_2nd_election, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-m2a_thd <- lm_robust(np_share_cv_1 ~ r_year, data = data_after_2nd_election, 
-                 clusters = country_name_short)
-m2b_thd <- lm_robust(np_share_cv_1 ~ r_year + crisis_election, 
-                 data = data_after_2nd_election, 
-                 clusters = country_name_short)
+m2a_thd <- prais_winsten(np_share_cv_1 ~ r_year, 
+                         data = data_after_2nd_election, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m2b_thd <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election, 
+                         data = data_after_2nd_election, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-m3a_thd <- lm_robust(np_share_pnp_1 ~ r_year, data = data_after_2nd_election, 
-                 clusters = country_name_short)
-m3b_thd <- lm_robust(np_share_pnp_1 ~ r_year + crisis_election, 
-                 data = data_after_2nd_election, 
-                 clusters = country_name_short)
+m3a_thd <- prais_winsten(np_share_pnp_1 ~ r_year, 
+                         data = data_after_2nd_election, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m3b_thd <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election, 
+                         data = data_after_2nd_election, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("All new parties" = m1a_thd, 
@@ -175,23 +219,27 @@ modelsummary::modelsummary(
         "r_year"="Year (0 = 1991)", 
         "crisis_election"="Two elections after 2008"
     ),
-    gof_omit = "Std.Errors", # Omit "Std.Errors" clustered
     output = "figs/tab1_since_third_election.html",
+    notes = PW_NOTE,
     stars = TRUE
 )
 
-m7_thd <- lm_robust(np_share_nc_1 ~ r_year + crisis_election, 
-                data = data_after_2nd_election %>% filter(region_type == "Never stable region"), 
-                clusters = country_name_short)
-m8_thd <- lm_robust(np_share_nc_1 ~ r_year + crisis_election, 
-                data = data_after_2nd_election %>% filter(region_type == "Once stable region"), 
-                clusters = country_name_short)
-m9_thd <- lm_robust(np_share_nc_1 ~ r_year * region_type + crisis_election, 
-                data = data_after_2nd_election, 
-                clusters = country_name_short)
-m10_thd <- lm_robust(np_share_nc_1 ~ r_year + crisis_election * region_type, 
-                 data = data_after_2nd_election, 
-                 clusters = country_name_short)
+m7_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
+                        data = data_after_2nd_election %>% filter(region_type == "Never stable region"), 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m8_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
+                        data = data_after_2nd_election %>% filter(region_type == "Once stable region"), 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m9_thd <- prais_winsten(np_share_nc_1 ~ r_year * region_type + crisis_election, 
+                        data = data_after_2nd_election, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+m10_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * region_type, 
+                         data = data_after_2nd_election, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("Never stable" = m7_thd, 
@@ -206,25 +254,34 @@ modelsummary::modelsummary(
         "crisis_election:region_typeOnce stable region" = "Two elections after 2008 × Once stable region"
     ),
     stars = TRUE, 
-    output = "figs/tab2_since_third_election.html",
-    gof_omit = "Std.Errors"
+    notes = PW_NOTE,
+    output = "figs/tab2_since_third_election.html"
 )
 
-## modely s threshold -------------------------------------
-app4_m1a <- lm_robust(np_share_nc_leg ~ r_year, data = data, 
-                 clusters = country_name_short)
-app4_m1b <- lm_robust(np_share_nc_leg ~ r_year + crisis_election, 
-                 data = data, clusters = country_name_short)
+## models with legislative threshold -------------------------------
+app4_m1a <- prais_winsten(np_share_nc_leg ~ r_year, data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app4_m1b <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election, 
+                          data = used_data,
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-app4_m2a <- lm_robust(np_share_cv_leg ~ r_year, data = data, 
-                 clusters = country_name_short)
-app4_m2b <- lm_robust(np_share_cv_leg ~ r_year + crisis_election, 
-                 data = data, clusters = country_name_short)
+app4_m2a <- prais_winsten(np_share_cv_leg ~ r_year, data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app4_m2b <- prais_winsten(np_share_cv_leg ~ r_year + crisis_election, 
+                          data = used_data,
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-app4_m3a <- lm_robust(np_share_pnp_leg ~ r_year, data = data, 
-                 clusters = country_name_short)
-app4_m3b <- lm_robust(np_share_pnp_leg ~ r_year + crisis_election, 
-                 data = data, clusters = country_name_short)
+app4_m3a <- prais_winsten(np_share_pnp_leg ~ r_year, data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app4_m3b <- prais_winsten(np_share_pnp_leg ~ r_year + crisis_election, 
+                          data = used_data,
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("All new parties" = app4_m1a, 
@@ -238,23 +295,30 @@ modelsummary::modelsummary(
         "crisis_election"="Two elections after 2008"
     ),
     title = "Models with new party share (legislative threshold)",
-    output = "figs/np_share_leg_tab1.html",
-    gof_omit = "Std.Errors",
+    notes = PW_NOTE,
+    output = "figs/tab1_np_share_leg.html",
     stars = TRUE
 )
 
-app4_m7 <- lm_robust(np_share_nc_leg ~ r_year + crisis_election, 
-                data = data %>% filter(region_type == "Never stable region"), 
-                clusters = country_name_short)
-app4_m8 <- lm_robust(np_share_nc_leg ~ r_year + crisis_election, 
-                data = data %>% filter(region_type == "Once stable region"), 
-                clusters = country_name_short)
-app4_m9 <- lm_robust(np_share_nc_leg ~ r_year * region_type + crisis_election, 
-                data = data, 
-                clusters = country_name_short)
-app4_m10 <- lm_robust(np_share_nc_leg ~ r_year + crisis_election * region_type, 
-                 data = data, 
-                 clusters = country_name_short)
+app4_m7 <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election, 
+                          data = used_data %>% filter(region_type == "Never stable region"), 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+
+app4_m8 <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election, 
+                         data = used_data %>% filter(region_type == "Once stable region"), 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+
+app4_m9 <- prais_winsten(np_share_nc_leg ~ r_year * region_type + crisis_election, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+
+app4_m10 <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election * region_type, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("Never stable" = app4_m7, 
@@ -270,25 +334,38 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     title = "Models with new party share (legislative threshold)",
-    gof_omit = "Std.Errors",
-    output = "figs/np_share_leg_tab2.html"
+    notes = PW_NOTE,
+    output = "figs/tab2_np_share_leg.html"
 )
 
-## modely s počty stran -----------------------------------
-app5_m1a <- lm_robust(np_number_nc_1 ~ r_year, data = data, 
-                      clusters = country_name_short)
-app5_m1b <- lm_robust(np_number_nc_1 ~ r_year + crisis_election, 
-                      data = data, clusters = country_name_short)
+## models with party number -----------------------------------
+app5_m1a <- prais_winsten(np_number_nc_1 ~ r_year,
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5_m1b <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-app5_m2a <- lm_robust(np_number_cv_1 ~ r_year, data = data, 
-                      clusters = country_name_short)
-app5_m2b <- lm_robust(np_number_cv_1 ~ r_year + crisis_election, 
-                      data = data, clusters = country_name_short)
 
-app5_m3a <- lm_robust(np_number_pnp_1 ~ r_year, data = data, 
-                      clusters = country_name_short)
-app5_m3b <- lm_robust(np_number_pnp_1 ~ r_year + crisis_election, 
-                      data = data, clusters = country_name_short)
+app5_m2a <- prais_winsten(np_number_cv_1 ~ r_year,
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5_m2b <- prais_winsten(np_number_cv_1 ~ r_year + crisis_election, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+
+app5_m3a <- prais_winsten(np_number_pnp_1 ~ r_year,
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5_m3b <- prais_winsten(np_number_pnp_1 ~ r_year + crisis_election, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("All new parties" = app5_m1a, 
@@ -302,23 +379,27 @@ modelsummary::modelsummary(
         "crisis_election"="Two elections after 2008"
     ),
     title = "Models of new party count",
-    output = "figs/np_number_tab1.html",
-    gof_omit = "Std.Errors",
+    notes = PW_NOTE,
+    output = "figs/tab1_np_number.html",
     stars = TRUE
 )
 
-app5_m7 <- lm_robust(np_number_nc_1 ~ r_year + crisis_election, 
-                     data = data %>% filter(region_type == "Never stable region"), 
-                     clusters = country_name_short)
-app5_m8 <- lm_robust(np_number_nc_1 ~ r_year + crisis_election, 
-                     data = data %>% filter(region_type == "Once stable region"), 
-                     clusters = country_name_short)
-app5_m9 <- lm_robust(np_number_nc_1 ~ r_year * region_type + crisis_election, 
-                     data = data, 
-                     clusters = country_name_short)
-app5_m10 <- lm_robust(np_number_nc_1 ~ r_year + crisis_election * region_type, 
-                      data = data, 
-                      clusters = country_name_short)
+app5_m7 <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election, 
+                         data = used_data %>% filter(region_type == "Never stable region"), 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5_m8 <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election, 
+                         data = used_data %>% filter(region_type == "Once stable region"), 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5_m9 <- prais_winsten(np_number_nc_1 ~ r_year * region_type + crisis_election, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5_m10 <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election * region_type, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("Never stable" = app5_m7, 
@@ -333,57 +414,38 @@ modelsummary::modelsummary(
         "crisis_election:region_typeOnce stable region" = "Two elections after 2008 × Once stable region"
     ),
     stars = TRUE, 
-    output = "figs/np_number_tab2.html",
-    gof_omit = "Std.Errors",
-    title = "Models of new party count"
+    title = "Models of new party count",
+    notes = PW_NOTE,
+    output = "figs/tab2_np_number.html"
 )
 
-# # Poisson regression
-# app5_m1a_p <- glm(np_number_nc_1 ~ r_year, data = data, family = poisson)
-# app5_m1b_p <- glm(np_number_nc_1 ~ r_year + crisis_election, 
-#                   data = data, family = poisson)
-# 
-# app5_m2a_p <- glm(np_number_cv_1 ~ r_year, data = data, 
-#                   family = poisson)
-# app5_m2b_p <- glm(np_number_cv_1 ~ r_year + crisis_election, 
-#                   data = data, family = poisson)
-# 
-# app5_m3a_p <- glm(np_number_pnp_1 ~ r_year, data = data, 
-#                   family = poisson)
-# app5_m3b_p <- glm(np_number_pnp_1 ~ r_year + crisis_election, 
-#                   data = data, family = poisson)
-# 
-# modelsummary::modelsummary(
-#     list("All new parties" = app5_m1a_p, 
-#          "All new parties" = app5_m1b_p, 
-#          "Genuinely new parties" = app5_m2a_p, 
-#          "Genuinely new parties" = app5_m2b_p, 
-#          "Partially new parties" = app5_m3a_p, 
-#          "Partially new parties" = app5_m3b_p), 
-#     coef_rename = c(
-#         "r_year"="Year (0 = 1991)", 
-#         "crisis_election"="Two elections after 2008"
-#     ),
-#     title = "Models with new party count",
-#     # output = "figs/np_number_tab1.html",
-#     gof_omit = "Std.Errors",
-#     stars = TRUE
-# )
+app5b_m1a <- prais_winsten(np_number_nc_leg ~ r_year,
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5b_m1b <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-app5b_m1a <- lm_robust(np_number_nc_leg ~ r_year, data = data, 
-                      clusters = country_name_short)
-app5b_m1b <- lm_robust(np_number_nc_leg ~ r_year + crisis_election, 
-                      data = data, clusters = country_name_short)
 
-app5b_m2a <- lm_robust(np_number_cv_leg ~ r_year, data = data, 
-                      clusters = country_name_short)
-app5b_m2b <- lm_robust(np_number_cv_leg ~ r_year + crisis_election, 
-                      data = data, clusters = country_name_short)
+app5b_m2a <- prais_winsten(np_number_cv_leg ~ r_year,
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5b_m2b <- prais_winsten(np_number_cv_leg ~ r_year + crisis_election, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
-app5b_m3a <- lm_robust(np_number_pnp_leg ~ r_year, data = data, 
-                      clusters = country_name_short)
-app5b_m3b <- lm_robust(np_number_pnp_leg ~ r_year + crisis_election, 
-                      data = data, clusters = country_name_short)
+app5b_m3a <- prais_winsten(np_number_pnp_leg ~ r_year,
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5b_m3b <- prais_winsten(np_number_pnp_leg ~ r_year + crisis_election, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("All new parties" = app5b_m1a, 
@@ -397,23 +459,27 @@ modelsummary::modelsummary(
         "crisis_election"="Two elections after 2008"
     ),
     title = "Models of new party count",
-    output = "figs/np_number_tab3.html",
-    gof_omit = "Std.Errors",
+    notes = PW_NOTE,
+    output = "figs/tab3_np_number.html",
     stars = TRUE
 )
 
-app5b_m7 <- lm_robust(np_number_nc_leg ~ r_year + crisis_election, 
-                     data = data %>% filter(region_type == "Never stable region"), 
-                     clusters = country_name_short)
-app5b_m8 <- lm_robust(np_number_nc_leg ~ r_year + crisis_election, 
-                     data = data %>% filter(region_type == "Once stable region"), 
-                     clusters = country_name_short)
-app5b_m9 <- lm_robust(np_number_nc_leg ~ r_year * region_type + crisis_election, 
-                     data = data, 
-                     clusters = country_name_short)
-app5b_m10 <- lm_robust(np_number_nc_leg ~ r_year + crisis_election * region_type, 
-                      data = data, 
-                      clusters = country_name_short)
+app5b_m7 <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election, 
+                         data = used_data %>% filter(region_type == "Never stable region"), 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5b_m8 <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election, 
+                         data = used_data %>% filter(region_type == "Once stable region"), 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5b_m9 <- prais_winsten(np_number_nc_leg ~ r_year * region_type + crisis_election, 
+                         data = used_data, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+app5b_m10 <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election * region_type, 
+                          data = used_data, 
+                          index = c("country_name_short", "year"), 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
 
 modelsummary::modelsummary(
     list("Never stable" = app5b_m7, 
@@ -428,9 +494,9 @@ modelsummary::modelsummary(
         "crisis_election:region_typeOnce stable region" = "Two elections after 2008 × Once stable region"
     ),
     stars = TRUE, 
-    output = "figs/np_number_tab4.html",
-    gof_omit = "Std.Errors",
-    title = "Models of new party count"
+    output = "figs/tab4_np_number.html",
+    title = "Models of new party count", 
+    notes = PW_NOTE
 )
 
 # TODO: připravit data

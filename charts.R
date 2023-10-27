@@ -546,14 +546,14 @@ chart_data2 <- elects_unique_cee %>%
             country_name_short == "BGR" & election_year %in% c(2001, 2005) ~ "3rd generation",
             country_name_short == "CZE" & election_year %in% c(1996, 1998) ~ "2nd generation",
             country_name_short == "CZE" & election_year %in% c(2002, 2006) ~ "3rd generation",
-            country_name_short == "CZE" & election_year %in% c(2010) ~ "4th generation",
+            # country_name_short == "CZE" & election_year %in% c(2010) ~ "4th generation",
             country_name_short == "EST" & election_year %in% c(1995) ~ "2nd generation",
             country_name_short == "EST" & election_year %in% c(1999, 2003) ~ "3rd generation",
             country_name_short == "HRV" & election_year %in% c(2003, 2007, 2011) ~ "3rd generation",
-            country_name_short == "HRV" & election_year %in% c(2015) ~ "4th generation",
+            # country_name_short == "HRV" & election_year %in% c(2015) ~ "4th generation",
             country_name_short == "HUN" & election_year %in% c(1994) ~ "2nd generation",
             country_name_short == "HUN" & election_year %in% c(1998, 2002, 2006) ~ "3rd generation",
-            country_name_short == "HUN" & election_year %in% c(2010) ~ "4th generation",
+            # country_name_short == "HUN" & election_year %in% c(2010) ~ "4th generation",
             country_name_short == "LTU" & election_year %in% c(1996) ~ "2nd generation",
             country_name_short == "LTU" & election_year %in% c(2000, 2004) ~ "3rd generation",
             country_name_short == "LVA" & election_year %in% c(1995) ~ "2nd generation",
@@ -562,22 +562,20 @@ chart_data2 <- elects_unique_cee %>%
             country_name_short == "POL" & election_year %in% c(1997, 2001) ~ "3rd generation",
             country_name_short == "ROU" & election_year %in% c(1996) ~ "2nd generation",
             country_name_short == "ROU" & election_year %in% c(2000, 2004, 2008) ~ "3rd generation",
-            country_name_short == "ROU" & election_year %in% c(2012) ~ "4th generation",
+            # country_name_short == "ROU" & election_year %in% c(2012) ~ "4th generation",
             country_name_short == "SVK" & election_year %in% c(1994, 1998) ~ "2nd generation",
             country_name_short == "SVK" & election_year %in% c(2002, 2006) ~ "3rd generation",
             country_name_short == "SVN" & election_year %in% c(1996, 2000, 2004) ~ "2nd generation",
             country_name_short == "SVN" & election_year %in% c(2008) ~ "3rd generation",
-            country_name_short == "SVN" & election_year %in% c(2011) ~ "4th generation", 
-            post_crisis_election2 == "First/Second post-crisis election" ~ "4th generation"
+            # country_name_short == "SVN" & election_year %in% c(2011) ~ "4th generation", 
+            post_crisis_election2 == "First/Second post-crisis election" ~ "4th generation (2 post-crisis el.)",
+            post_crisis_election2 == "Other post-crisis election" ~ "Other post-crisis"
         )
     ) %>% 
     mutate(
         np_share_nc_1 = np_share_nc_1 * 100,
         np_share_cv_1 = np_share_cv_1 * 100,
     )
-    
-    
-
 
 chart_data2 %>% 
     select(election_year, region_type, generation, np_share_nc_1, np_share_cv_1,
@@ -591,8 +589,10 @@ chart_data2 %>%
     filter(!is.na(generation)) %>% 
     mutate(region_type = factor(region_type, levels = c("Once stable region", "Never stable region"))) %>% 
     ggplot(., aes(x = name, y = value, colour = name)) + 
+    geom_boxplot(outlier.shape = NA) + 
     geom_jitter(width = 0.1) + 
-    facet_wrap(~region_type + generation, scales = "free_x") + 
+    facet_wrap(~region_type + generation, scales = "free_x", 
+               nrow = 2) + 
     theme_bw() + 
     geom_hline(yintercept = 0, linewidth = 0.2) +
     theme(legend.position = "top", panel.grid.major.x = element_blank(), 
@@ -600,5 +600,10 @@ chart_data2 %>%
           axis.ticks.x = element_blank()) + 
     labs(x = "", y = "", colour = "")
 
+ggsave("figs/generations5.png", 
+       width = 9,
+       height = 6,
+       units = "in",
+       dpi = 300,
+       type = "cairo")
 
-    
