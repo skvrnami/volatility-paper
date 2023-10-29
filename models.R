@@ -1,5 +1,7 @@
 library(prais)
+library(broom)
 library(dplyr)
+library(lmtest)
 library(ggplot2)
 library(ggeffects)
 library(estimatr)
@@ -63,25 +65,31 @@ used_data <- data %>%
 # Tab 1
 m1a_pw <- prais_winsten(np_share_nc_1 ~ r_year, data = used_data, 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m1b_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
               data = used_data, index = c("country_name_short", "year"), 
-              twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+              twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m2a_pw <- prais_winsten(np_share_cv_1 ~ r_year, data = used_data, 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m2b_pw <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election, 
                         data = used_data, 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m3a_pw <- prais_winsten(np_share_pnp_1 ~ r_year, data = used_data, 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m3b_pw <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election, 
                         data = used_data, index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
-PW_NOTE <- "Models estimated using Prais-Winsten estimator."
+PW_NOTE <- "Models estimated using Prais-Winsten regression with panel-corrected standard errors."
 modelsummary::modelsummary(
     list("All new parties" = m1a_pw, 
          "All new parties" = m1b_pw, 
@@ -94,6 +102,7 @@ modelsummary::modelsummary(
         "crisis_election"="Two elections after 2008"
     ),
     stars = TRUE, 
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     notes = PW_NOTE,
     output = "figs/tab1.html"
 )
@@ -101,19 +110,23 @@ modelsummary::modelsummary(
 m7_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
                        data = used_data %>% filter(region_type == "Never stable region"), 
                        index = c("country_name_short", "year"), 
-                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1")
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m8_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election,
                        data = used_data %>% filter(region_type == "Once stable region"), 
                        index = c("country_name_short", "year"), 
-                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m9_pw <- prais_winsten(np_share_nc_1 ~ r_year * region_type + crisis_election,
                        data = used_data, 
                        index = c("country_name_short", "year"), 
-                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m10_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * region_type,
                        data = used_data, 
                        index = c("country_name_short", "year"), 
-                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                       twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("Never stable" = m7_pw, 
@@ -129,6 +142,7 @@ modelsummary::modelsummary(
     ),
     stars = TRUE,
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2.html"
 )
 
@@ -136,29 +150,35 @@ modelsummary::modelsummary(
 m1a_2pw <- prais_winsten(np_share_nc_1 ~ rank_election_within_country,
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m1b_2pw <- prais_winsten(np_share_nc_1 ~ rank_election_within_country + crisis_election,
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 m2a_2pw <- prais_winsten(np_share_cv_1 ~ rank_election_within_country,
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m2b_2pw <- prais_winsten(np_share_cv_1 ~ rank_election_within_country + crisis_election, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 m3a_2pw <- prais_winsten(np_share_pnp_1 ~ rank_election_within_country,
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m3b_2pw <- prais_winsten(np_share_pnp_1 ~ rank_election_within_country + crisis_election, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("All new parties" = m1a_2pw, 
@@ -173,6 +193,7 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab1_election_rank.html"
 )
 
@@ -184,29 +205,35 @@ data_after_2nd_election <- used_data %>%
 m1a_thd <- prais_winsten(np_share_nc_1 ~ r_year, 
                          data = data_after_2nd_election, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m1b_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
                          data = data_after_2nd_election, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 m2a_thd <- prais_winsten(np_share_cv_1 ~ r_year, 
                          data = data_after_2nd_election, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m2b_thd <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election, 
                          data = data_after_2nd_election, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 m3a_thd <- prais_winsten(np_share_pnp_1 ~ r_year, 
                          data = data_after_2nd_election, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m3b_thd <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election, 
                          data = data_after_2nd_election, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("All new parties" = m1a_thd, 
@@ -221,25 +248,30 @@ modelsummary::modelsummary(
     ),
     output = "figs/tab1_since_third_election.html",
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     stars = TRUE
 )
 
 m7_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
                         data = data_after_2nd_election %>% filter(region_type == "Never stable region"), 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m8_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
                         data = data_after_2nd_election %>% filter(region_type == "Once stable region"), 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m9_thd <- prais_winsten(np_share_nc_1 ~ r_year * region_type + crisis_election, 
                         data = data_after_2nd_election, 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 m10_thd <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * region_type, 
                          data = data_after_2nd_election, 
                         index = c("country_name_short", "year"), 
-                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("Never stable" = m7_thd, 
@@ -255,33 +287,40 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2_since_third_election.html"
 )
 
 ## models with legislative threshold -------------------------------
 app4_m1a <- prais_winsten(np_share_nc_leg ~ r_year, data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app4_m1b <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election, 
                           data = used_data,
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app4_m2a <- prais_winsten(np_share_cv_leg ~ r_year, data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app4_m2b <- prais_winsten(np_share_cv_leg ~ r_year + crisis_election, 
                           data = used_data,
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app4_m3a <- prais_winsten(np_share_pnp_leg ~ r_year, data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app4_m3b <- prais_winsten(np_share_pnp_leg ~ r_year + crisis_election, 
                           data = used_data,
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("All new parties" = app4_m1a, 
@@ -297,28 +336,33 @@ modelsummary::modelsummary(
     title = "Models with new party share (legislative threshold)",
     notes = PW_NOTE,
     output = "figs/tab1_np_share_leg.html",
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     stars = TRUE
 )
 
 app4_m7 <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election, 
                           data = used_data %>% filter(region_type == "Never stable region"), 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app4_m8 <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election, 
                          data = used_data %>% filter(region_type == "Once stable region"), 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app4_m9 <- prais_winsten(np_share_nc_leg ~ r_year * region_type + crisis_election, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app4_m10 <- prais_winsten(np_share_nc_leg ~ r_year + crisis_election * region_type, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("Never stable" = app4_m7, 
@@ -335,6 +379,7 @@ modelsummary::modelsummary(
     stars = TRUE, 
     title = "Models with new party share (legislative threshold)",
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2_np_share_leg.html"
 )
 
@@ -342,30 +387,35 @@ modelsummary::modelsummary(
 app5_m1a <- prais_winsten(np_number_nc_1 ~ r_year,
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5_m1b <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
-
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app5_m2a <- prais_winsten(np_number_cv_1 ~ r_year,
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5_m2b <- prais_winsten(np_number_cv_1 ~ r_year + crisis_election, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app5_m3a <- prais_winsten(np_number_pnp_1 ~ r_year,
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5_m3b <- prais_winsten(np_number_pnp_1 ~ r_year + crisis_election, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("All new parties" = app5_m1a, 
@@ -381,25 +431,30 @@ modelsummary::modelsummary(
     title = "Models of new party count",
     notes = PW_NOTE,
     output = "figs/tab1_np_number.html",
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     stars = TRUE
 )
 
 app5_m7 <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election, 
                          data = used_data %>% filter(region_type == "Never stable region"), 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5_m8 <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election, 
                          data = used_data %>% filter(region_type == "Once stable region"), 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5_m9 <- prais_winsten(np_number_nc_1 ~ r_year * region_type + crisis_election, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5_m10 <- prais_winsten(np_number_nc_1 ~ r_year + crisis_election * region_type, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("Never stable" = app5_m7, 
@@ -416,36 +471,42 @@ modelsummary::modelsummary(
     stars = TRUE, 
     title = "Models of new party count",
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2_np_number.html"
 )
 
 app5b_m1a <- prais_winsten(np_number_nc_leg ~ r_year,
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5b_m1b <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
-
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app5b_m2a <- prais_winsten(np_number_cv_leg ~ r_year,
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5b_m2b <- prais_winsten(np_number_cv_leg ~ r_year + crisis_election, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 app5b_m3a <- prais_winsten(np_number_pnp_leg ~ r_year,
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5b_m3b <- prais_winsten(np_number_pnp_leg ~ r_year + crisis_election, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("All new parties" = app5b_m1a, 
@@ -460,6 +521,7 @@ modelsummary::modelsummary(
     ),
     title = "Models of new party count",
     notes = PW_NOTE,
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab3_np_number.html",
     stars = TRUE
 )
@@ -467,19 +529,23 @@ modelsummary::modelsummary(
 app5b_m7 <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election, 
                          data = used_data %>% filter(region_type == "Never stable region"), 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5b_m8 <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election, 
                          data = used_data %>% filter(region_type == "Once stable region"), 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5b_m9 <- prais_winsten(np_number_nc_leg ~ r_year * region_type + crisis_election, 
                          data = used_data, 
                          index = c("country_name_short", "year"), 
-                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 app5b_m10 <- prais_winsten(np_number_nc_leg ~ r_year + crisis_election * region_type, 
                           data = used_data, 
                           index = c("country_name_short", "year"), 
-                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") 
+                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary::modelsummary(
     list("Never stable" = app5b_m7, 
@@ -495,6 +561,7 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     output = "figs/tab4_np_number.html",
+    gof_map = c("nobs", "r.squared", "adj.r.squared"),
     title = "Models of new party count", 
     notes = PW_NOTE
 )
