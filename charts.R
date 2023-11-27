@@ -6,11 +6,10 @@ library(ggplot2)
 library(lemon)
 library(patchwork)
 
-
-elects_unique_cee <- readRDS("data/elects_unique_cee.rds")
+final_data <- readRDS("data/data_final.rds")
 
 np_share_hist_en <- 
-    elects_unique_cee %>% 
+    final_data %>% 
     select(country_name_short, election_year, contains("np_share")) %>% 
     pivot_longer(cols = c(starts_with("np_"))) %>% 
     filter(!is.na(value)) %>%
@@ -38,14 +37,14 @@ chart3_data <- np_share_hist_en %>%
 (np_share_hist_plot_en <-
     chart3_data %>% 
     ggplot(aes(x = value, group = name))+
-    geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-    geom_text(aes(x = mean + 0.06, y = 30, label = sprintf("%1.1f%%", mean*100)), 
+    geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
+    geom_text(aes(x = mean + 0.06, y = 30, label = sprintf("%1.1f%%", mean)), 
               data = chart3_data %>% select(country_name_short, mean, name) %>% 
                   unique()) +
     geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
-    scale_x_continuous(labels = label_percent())+
+    scale_x_continuous(labels = label_percent(scale = 1))+
     scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
-                       limits = c(0, 35))+
+                       limits = c(0, 40))+
     labs(x = "Electoral results of new parties",
          y = "" #, # y = "Počet výskytů v 83 volbách", 
          #caption = "Historgram je definován takovým způsobem, že první sloupec obsahuje jen volby s nulovým ziskem.\nVertikální přerušovaná čára představuje průměrný volební zisk nových stran.")+
@@ -57,12 +56,12 @@ chart3_data <- np_share_hist_en %>%
 (ch3_all_parties <- chart3_data %>% 
     filter(name == "All new parties, 1%") %>% 
     ggplot(aes(x = value))+
-    geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-    geom_text(aes(x = 0.164 + 0.06, y = 25, label = sprintf("%1.1f%%", 16.4))) +
+    geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white") +
+    geom_text(aes(x = 16.4 + 4, y = 25, label = sprintf("%1.1f%%", 16.4))) +
     geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
-    scale_x_continuous(labels = label_percent())+
+    scale_x_continuous(labels = label_percent(scale = 1))+
     scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
-                       limits = c(0, 35))+
+                       limits = c(0, 40))+
     labs(x = "",
          y = "" #, # y = "Počet výskytů v 83 volbách", 
          #caption = "Historgram je definován takovým způsobem, že první sloupec obsahuje jen volby s nulovým ziskem.\nVertikální přerušovaná čára představuje průměrný volební zisk nových stran.")+
@@ -74,12 +73,12 @@ chart3_data <- np_share_hist_en %>%
 (ch3_gn_parties <- chart3_data %>% 
         filter(name == "Genuinely new parties, 1%") %>% 
         ggplot(aes(x = value))+
-        geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-        geom_text(aes(x = 0.103 + 0.06, y = 25, label = sprintf("%1.1f%%", 10.3))) +
+        geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
+        geom_text(aes(x = 10.3 + 4, y = 25, label = sprintf("%1.1f%%", 10.3))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
-        scale_x_continuous(labels = label_percent())+
+        scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
-                           limits = c(0, 35))+
+                           limits = c(0, 40))+
         labs(x = "",
              y = "" #, # y = "Počet výskytů v 83 volbách", 
              #caption = "Historgram je definován takovým způsobem, že první sloupec obsahuje jen volby s nulovým ziskem.\nVertikální přerušovaná čára představuje průměrný volební zisk nových stran.")+
@@ -91,12 +90,12 @@ chart3_data <- np_share_hist_en %>%
 (ch3_pnp_parties <- chart3_data %>% 
         filter(name == "Partially new parties, 1%") %>% 
         ggplot(aes(x = value))+
-        geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-        geom_text(aes(x = 0.06 + 0.06, y = 30, label = sprintf("%1.1f%%", 6))) +
+        geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white") +
+        geom_text(aes(x = 6 + 3, y = 30, label = sprintf("%1.1f%%", 6))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
-        scale_x_continuous(labels = label_percent())+
-        scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
-                           limits = c(0, 35))+
+        scale_x_continuous(labels = label_percent(scale = 1))+
+        scale_y_continuous(breaks = seq(0, 40, 10), minor_breaks = seq(2, 10, 2), 
+                           limits = c(0, 40)) + 
         labs(x = "Electoral results of new parties",
              y = "" #, # y = "Počet výskytů v 83 volbách", 
              #caption = "Historgram je definován takovým způsobem, že první sloupec obsahuje jen volby s nulovým ziskem.\nVertikální přerušovaná čára představuje průměrný volební zisk nových stran.")+
@@ -106,8 +105,8 @@ chart3_data <- np_share_hist_en %>%
         theme(legend.position = "none"))
 
 new_parties <- 
-    elects_unique_cee %>%
-    select(country_name_short, election_date, election_year, starts_with("np_"))
+    final_data %>%
+    select(country_name_short, election_year, starts_with("np_"))
 
 new_parties <- 
     new_parties %>% 
@@ -136,7 +135,7 @@ new_party_share <- new_parties %>%
         ggplot(aes(x = election_year, y = value))+
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -155,7 +154,8 @@ new_party_share <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", 
+                                                   scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -171,7 +171,8 @@ new_party_share <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", 
+                                                   scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -187,7 +188,8 @@ new_party_share <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", 
+                                                   scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -230,10 +232,10 @@ chart3_data_app <- np_share_hist_en %>%
 (ch3_all_parties_app <- chart3_data_app %>% 
         filter(name == "All new parties, threshold") %>% 
         ggplot(aes(x = value))+
-        geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-        geom_text(aes(x = 0.148 + 0.06, y = 25, label = sprintf("%1.1f%%", 14.8))) +
-        geom_vline(aes(xintercept = 0.148), linetype = "dashed", alpha = 0.5)+
-        scale_x_continuous(labels = label_percent())+
+        geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
+        geom_text(aes(x = 14.8 + 4, y = 25, label = sprintf("%1.1f%%", 14.8))) +
+        geom_vline(aes(xintercept = 14.8), linetype = "dashed", alpha = 0.5)+
+        scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
                            limits = c(0, 60))+
         labs(x = "",
@@ -247,8 +249,8 @@ chart3_data_app <- np_share_hist_en %>%
 (ch3_gn_parties_app <- chart3_data_app %>% 
         filter(name == "Genuinely new parties, threshold") %>% 
         ggplot(aes(x = value))+
-        geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-        geom_text(aes(x = 0.106 + 0.06, y = 25, label = sprintf("%1.1f%%", 10.6))) +
+        geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
+        geom_text(aes(x = 10.6 + 4, y = 25, label = sprintf("%1.1f%%", 10.6))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
         scale_x_continuous(labels = label_percent())+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
@@ -264,10 +266,10 @@ chart3_data_app <- np_share_hist_en %>%
 (ch3_pnp_parties_app <- chart3_data_app %>% 
         filter(name == "Partially new parties, threshold") %>% 
         ggplot(aes(x = value))+
-        geom_histogram(bins = 12, breaks = seq(-0.05,0.5,0.05), color = "white")+
-        geom_text(aes(x = 0.042 + 0.06, y = 30, label = sprintf("%1.1f%%", 4.2))) +
+        geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
+        geom_text(aes(x = 4.2 + 4, y = 30, label = sprintf("%1.1f%%", 4.2))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
-        scale_x_continuous(labels = label_percent())+
+        scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
                            limits = c(0, 60))+
         labs(x = "",
@@ -352,13 +354,13 @@ ggsave("figs/chart3_appendix.png",
        type = "cairo")
 
 # Bar chart (average over generations) ---------------------
-bar_chart_data <- elects_unique_cee %>% 
+bar_chart_data <- final_data %>% 
     mutate(
         region_type = case_when(
-            country_name %in% c("Croatia", "Czech Republic", "Hungary", 
-                                "Romania", "Slovenia") ~ "Once stable region", 
-            country_name %in% c("Estonia", "Lithuania", "Latvia", "Poland", 
-                                "Bulgaria", "Slovakia") ~ "Never stable region"
+            country_name_short %in% c("HRV", "CZE", "HUN", 
+                                "ROU", "SVN") ~ "Formerly stable region", 
+            country_name_short %in% c("EST", "LTU", "LVA", "POL", 
+                                "BGR", "SVK") ~ "Never stable region"
         ),
         generation = case_when(
             country_name_short == "BGR" & election_year %in% c(1994, 1997) ~ "2nd generation",
@@ -394,10 +396,6 @@ bar_chart_data <- elects_unique_cee %>%
         across(any_of(c("np_share_nc_1", "np_share_cv_1", "reward_nc_pm_long")), 
                ~mean(.x, na.rm = TRUE))
     ) %>% 
-    mutate(
-        np_share_nc_1 = np_share_nc_1 * 100,
-        np_share_cv_1 = np_share_cv_1 * 100,
-    ) %>% 
     tidyr::pivot_longer(., cols = 3:5) %>% 
     mutate(name = case_when(
         name == "np_share_nc_1" ~ "New parties share (%)", 
@@ -407,7 +405,7 @@ bar_chart_data <- elects_unique_cee %>%
 
 bar1 <- bar_chart_data %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Once stable region", "Never stable region"))) %>% 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region"))) %>% 
     ggplot(., aes(x = generation, y = value, fill = name)) + 
     geom_bar(stat = "identity", position = "dodge2") + 
     facet_wrap(~region_type + generation, scales = "free_x") + 
@@ -429,19 +427,9 @@ ggsave("figs/bar_generations.png",
        dpi = 300,
        type = "cairo")
 
-# bar_chart_data %>% 
-#     filter(!is.na(generation)) %>% 
-#     mutate(region_type = factor(region_type, levels = c("Once stable region", "Never stable region"))) %>% 
-#     ggplot(., aes(x = generation, y = value, fill = name)) + 
-#     geom_bar(stat = "identity", position = "dodge2") + 
-#     facet_grid(region_type ~ ., scales = "free_x") + 
-#     theme_bw() + 
-#     theme(legend.position = "top", panel.grid.major.x = element_blank()) + 
-#     labs(x = "", y = "", fill = "")    
-
-bar_chart_data2 <- elects_unique_cee %>% 
+bar_chart_data2 <- final_data %>% 
     mutate(post_crisis = as.numeric(election_year > 2008)) %>% 
-    group_by(country_name, post_crisis) %>% 
+    group_by(country_name_short, post_crisis) %>% 
     mutate(
         post_crisis_election2 = case_when(
             post_crisis == 0 ~ "Before crisis", 
@@ -453,10 +441,10 @@ bar_chart_data2 <- elects_unique_cee %>%
     ungroup %>% 
     mutate(
         region_type = case_when(
-            country_name %in% c("Croatia", "Czech Republic", "Hungary", 
-                                "Romania", "Slovenia") ~ "Once stable region", 
-            country_name %in% c("Estonia", "Lithuania", "Latvia", "Poland", 
-                                "Bulgaria", "Slovakia") ~ "Never stable region"
+            country_name_short %in% c("HRV", "CZE", "HUN", 
+                                      "ROU", "SVN") ~ "Formerly stable region", 
+            country_name_short %in% c("EST", "LTU", "LVA", "POL", 
+                                      "BGR", "SVK") ~ "Never stable region"
         ),
         generation = case_when(
             country_name_short == "BGR" & election_year %in% c(1994, 1997) ~ "2nd generation",
@@ -490,15 +478,10 @@ bar_chart_data2 <- elects_unique_cee %>%
     ) %>% 
     select(region_type, generation, np_share_nc_1, np_share_cv_1,
            reward_nc_pm_long, everything()) %>%
-    View
     group_by(region_type, generation) %>%
     summarise(
         across(any_of(c("np_share_nc_1", "np_share_cv_1", "reward_nc_pm_long")), 
                ~mean(.x, na.rm = TRUE))
-    ) %>% 
-    mutate(
-        np_share_nc_1 = np_share_nc_1 * 100,
-        np_share_cv_1 = np_share_cv_1 * 100,
     ) %>% 
     tidyr::pivot_longer(., cols = 3:5) %>% 
     mutate(name = case_when(
@@ -509,7 +492,7 @@ bar_chart_data2 <- elects_unique_cee %>%
 
 bar_chart_data2 %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Once stable region", "Never stable region"))) %>% 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region"))) %>% 
     ggplot(., aes(x = generation, y = value, fill = name)) + 
     geom_bar(stat = "identity", position = "dodge2") + 
     facet_wrap(~region_type + generation, scales = "free_x") + 
@@ -522,9 +505,9 @@ bar_chart_data2 %>%
     labs(x = "", y = "", fill = "")
 
 
-chart_data2 <- elects_unique_cee %>% 
+chart_data2 <- final_data %>% 
     mutate(post_crisis = as.numeric(election_year > 2008)) %>% 
-    group_by(country_name, post_crisis) %>% 
+    group_by(country_name_short, post_crisis) %>% 
     mutate(
         post_crisis_election2 = case_when(
             post_crisis == 0 ~ "Before crisis", 
@@ -536,71 +519,236 @@ chart_data2 <- elects_unique_cee %>%
     ungroup %>% 
     mutate(
         region_type = case_when(
-            country_name %in% c("Croatia", "Czech Republic", "Hungary", 
-                                "Romania", "Slovenia") ~ "Once stable region", 
-            country_name %in% c("Estonia", "Lithuania", "Latvia", "Poland", 
-                                "Bulgaria", "Slovakia") ~ "Never stable region"
+            country_name_short %in% c("HRV", "CZE", "HUN", 
+                                      "ROU", "SVN") ~ "Formerly stable region", 
+            country_name_short %in% c("EST", "LTU", "LVA", "POL", 
+                                      "BGR", "SVK") ~ "Never stable region"
         ),
         generation = case_when(
-            country_name_short == "BGR" & election_year %in% c(1994, 1997) ~ "2nd generation",
+            country_name_short == "BGR" & election_year %in% c(1991, 1994, 1997) ~ "2nd generation",
             country_name_short == "BGR" & election_year %in% c(2001, 2005) ~ "3rd generation",
-            country_name_short == "CZE" & election_year %in% c(1996, 1998) ~ "2nd generation",
+            country_name_short == "CZE" & election_year %in% c(1992, 1996, 1998) ~ "2nd generation",
             country_name_short == "CZE" & election_year %in% c(2002, 2006) ~ "3rd generation",
             # country_name_short == "CZE" & election_year %in% c(2010) ~ "4th generation",
-            country_name_short == "EST" & election_year %in% c(1995) ~ "2nd generation",
-            country_name_short == "EST" & election_year %in% c(1999, 2003) ~ "3rd generation",
-            country_name_short == "HRV" & election_year %in% c(2003, 2007, 2011) ~ "3rd generation",
+            country_name_short == "EST" & election_year %in% c(1992, 1995) ~ "2nd generation",
+            country_name_short == "EST" & election_year %in% c(1999, 2003, 2007) ~ "3rd generation",
+            country_name_short == "HRV" & election_year %in% c(2000) ~ "2nd generation",
+            country_name_short == "HRV" & election_year %in% c(2003, 2007) ~ "3rd generation",
             # country_name_short == "HRV" & election_year %in% c(2015) ~ "4th generation",
             country_name_short == "HUN" & election_year %in% c(1994) ~ "2nd generation",
             country_name_short == "HUN" & election_year %in% c(1998, 2002, 2006) ~ "3rd generation",
             # country_name_short == "HUN" & election_year %in% c(2010) ~ "4th generation",
-            country_name_short == "LTU" & election_year %in% c(1996) ~ "2nd generation",
-            country_name_short == "LTU" & election_year %in% c(2000, 2004) ~ "3rd generation",
-            country_name_short == "LVA" & election_year %in% c(1995) ~ "2nd generation",
-            country_name_short == "LVA" & election_year %in% c(1998, 2002) ~ "3rd generation",
+            country_name_short == "LTU" & election_year %in% c(1992, 1996) ~ "2nd generation",
+            country_name_short == "LTU" & election_year %in% c(2000, 2004, 2008) ~ "3rd generation",
+            country_name_short == "LVA" & election_year %in% c(1993, 1995) ~ "2nd generation",
+            country_name_short == "LVA" & election_year %in% c(1998, 2002, 2006) ~ "3rd generation",
             country_name_short == "POL" & election_year %in% c(1993) ~ "2nd generation",
-            country_name_short == "POL" & election_year %in% c(1997, 2001) ~ "3rd generation",
-            country_name_short == "ROU" & election_year %in% c(1996) ~ "2nd generation",
+            country_name_short == "POL" & election_year %in% c(1997, 2001, 2005, 2007) ~ "3rd generation",
+            country_name_short == "ROU" & election_year %in% c(1992, 1996) ~ "2nd generation",
             country_name_short == "ROU" & election_year %in% c(2000, 2004, 2008) ~ "3rd generation",
             # country_name_short == "ROU" & election_year %in% c(2012) ~ "4th generation",
-            country_name_short == "SVK" & election_year %in% c(1994, 1998) ~ "2nd generation",
+            country_name_short == "SVK" & election_year %in% c(1992, 1994, 1998) ~ "2nd generation",
             country_name_short == "SVK" & election_year %in% c(2002, 2006) ~ "3rd generation",
-            country_name_short == "SVN" & election_year %in% c(1996, 2000, 2004) ~ "2nd generation",
+            country_name_short == "SVN" & election_year %in% c(1992, 1996, 2000, 2004) ~ "2nd generation",
             country_name_short == "SVN" & election_year %in% c(2008) ~ "3rd generation",
             # country_name_short == "SVN" & election_year %in% c(2011) ~ "4th generation", 
             post_crisis_election2 == "First/Second post-crisis election" ~ "4th generation (2 post-crisis el.)",
             post_crisis_election2 == "Other post-crisis election" ~ "Other post-crisis"
         )
-    ) %>% 
-    mutate(
-        np_share_nc_1 = np_share_nc_1 * 100,
-        np_share_cv_1 = np_share_cv_1 * 100,
     )
+
+# generations_check <- chart_data2 %>% 
+#     select(country_year, generation) 
+# 
+# medians <- chart_data2 %>% 
+#     group_by(generation, region_type) %>% 
+#     summarise(across(c(np_share_nc_1, np_share_cv_1, 
+#                        reward_nc_pm_long, reward_nc_cab_long), 
+#                      ~median(.x, na.rm = TRUE))) %>% 
+#     filter(!is.na(generation))
+# 
+# openxlsx::write.xlsx(
+#     list(
+#         "generace" = generations_check, 
+#         "medians" = medians
+#     ), 
+#     "kontrola.xlsx"
+# )
 
 chart_data2 %>% 
     select(election_year, region_type, generation, np_share_nc_1, np_share_cv_1,
-           reward_nc_pm_long) %>% 
-    tidyr::pivot_longer(., cols = 4:6) %>% 
+           reward_nc_pm_long, reward_nc_cab_long) %>% 
+    tidyr::pivot_longer(., cols = 4:7) %>% 
     mutate(name = case_when(
         name == "np_share_nc_1" ~ "New parties share (%)", 
         name == "np_share_cv_1" ~ "Genuinely new parties vote share (%)",
-        name == "reward_nc_pm_long" ~ "PM's party change (percentage points)"
+        name == "reward_nc_pm_long" ~ "PM's party change (percentage points)",
+        name == "reward_nc_cab_long" ~ "Government parties change (percentage points)"
     )) %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Once stable region", "Never stable region"))) %>% 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region")), 
+           name = factor(name, levels = c("New parties share (%)", "Genuinely new parties vote share (%)",
+                                          "PM's party change (percentage points)",
+                                          "Government parties change (percentage points)"))) %>% 
     ggplot(., aes(x = name, y = value, colour = name)) + 
     geom_boxplot(outlier.shape = NA) + 
     geom_jitter(width = 0.1) + 
     facet_wrap(~region_type + generation, scales = "free_x", 
                nrow = 2) + 
+    scale_colour_viridis_d() + 
     theme_bw() + 
     geom_hline(yintercept = 0, linewidth = 0.2) +
-    theme(legend.position = "top", panel.grid.major.x = element_blank(), 
+    guides(colour = guide_legend(nrow = 2, byrow = TRUE)) + 
+    theme(legend.position = "top", 
+          panel.grid.major.x = element_blank(), 
           axis.text.x = element_blank(), 
           axis.ticks.x = element_blank()) + 
     labs(x = "", y = "", colour = "")
 
-ggsave("figs/generations5.png", 
+ggsave("figs/generations5_4vars.png", 
+       width = 9,
+       height = 6,
+       units = "in",
+       dpi = 300,
+       type = "cairo")
+
+new_parties <- 
+    final_data %>%
+    select(country_name_short, election_year, starts_with("np_"))
+
+new_parties_eng <- 
+    new_parties %>% 
+    select(country_name_short, election_year, starts_with("np_share")) %>% 
+    rename("Genuinely new parties, threshold" = np_share_cv_leg,
+           "Genuinely new parties, 1%" = np_share_cv_1,
+           "All new parties, threshold" = np_share_nc_leg,
+           "All new parties, 1%" = np_share_nc_1,
+           "Partially new parties, threshold" = np_share_pnp_leg,
+           "Partially new parties, 1%" = np_share_pnp_1) %>% 
+    mutate(region = case_when(
+        country_name_short %in% c("POL", "EST", "LVA", "SVK", "LTU", "BGR") ~ "'Never stable' region (Baltic states, Bulgaria, Poland, Slovakia)", 
+        country_name_short %in% c("SVN", "CZE", "HRV", "ROU", "HUN") ~ "'Formerly stable' region (Croatia, Czechia, Hungary, Romania, Slovenia)"
+    ))
+
+new_parties_eng %>% 
+    # mutate(is_czech = if_else(country_name_short == "CZE", 1,0)) %>% 
+    pivot_longer(cols = -c(country_name_short, election_year, region)) %>% 
+    mutate(name = fct_relevel(name, 
+                              "All new parties, 1%",
+                              "All new parties, threshold",
+                              "Genuinely new parties, 1%",
+                              "Genuinely new parties, threshold",
+                              "Partially new parties, 1%",
+                              "Partially new parties, threshold")) %>% 
+    filter(grepl("1%", name)) %>% 
+    filter(!is.na(value)) %>% 
+    ggplot(aes(x = election_year, y = value))+
+    geom_point(alpha=0.5, aes(colour = region))+
+    geom_smooth(se = FALSE, method = "loess", aes(colour = region), linetype = "solid")+
+    scale_y_continuous(labels = percent_format(accuracy = 1, scale = 1)) + 
+    scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
+    scale_colour_viridis_d(option = "D") + 
+    # scale_colour_manual(values = c("#f1a340", "#998ec3")) +
+    labs(x=element_blank(), 
+         y=element_blank(),
+         colour = "") + 
+    facet_rep_wrap(~name, repeat.tick.labels = 'all', ncol = 3)+
+    theme_bw() +
+    theme(panel.spacing = unit(1, "lines"),
+          legend.position = "top") + 
+    guides(colour = guide_legend(nrow=2,byrow=TRUE))
+
+
+ggsave("figs/regions.png", width = 8, height = 4)
+
+
+# Generations - all 2nd generation election
+
+chart_data2b <- final_data %>% 
+    mutate(post_crisis = as.numeric(election_year > 2008)) %>% 
+    group_by(country_name_short) %>% 
+    mutate(election_no = row_number()) %>% 
+    group_by(country_name_short, post_crisis) %>% 
+    mutate(
+        post_crisis_election2 = case_when(
+            post_crisis == 0 ~ "Before crisis", 
+            post_crisis == 1 & row_number() %in% 1:2 ~ "First/Second post-crisis election", 
+            post_crisis == 1 ~ "Other post-crisis election"
+        ),
+        time_2008 = row_number()
+    ) %>% 
+    ungroup %>% 
+    mutate(
+        region_type = case_when(
+            country_name_short %in% c("HRV", "CZE", "HUN", 
+                                      "ROU", "SVN") ~ "Formerly stable region", 
+            country_name_short %in% c("EST", "LTU", "LVA", "POL", 
+                                      "BGR", "SVK") ~ "Never stable region"
+        ),
+        generation = case_when(
+            country_name_short == "BGR" & election_no > 1 & election_year <= 1997 ~ "2nd generation",
+            country_name_short == "BGR" & election_year %in% c(2001, 2005) ~ "3rd generation",
+            country_name_short == "CZE" & election_no > 1 & election_year <= 1998 ~ "2nd generation",
+            country_name_short == "CZE" & election_year %in% c(2002, 2006) ~ "3rd generation",
+            # country_name_short == "CZE" & election_year %in% c(2010) ~ "4th generation",
+            country_name_short == "EST" & election_no > 1 & election_year %in% c(1995) ~ "2nd generation",
+            country_name_short == "EST" & election_year %in% c(1999, 2003) ~ "3rd generation",
+            country_name_short == "HRV" & election_year %in% c(2003, 2007, 2011) ~ "3rd generation",
+            # country_name_short == "HRV" & election_year %in% c(2015) ~ "4th generation",
+            country_name_short == "HUN" & election_no > 1 & election_year <= 1994 ~ "2nd generation",
+            country_name_short == "HUN" & election_year %in% c(1998, 2002, 2006) ~ "3rd generation",
+            # country_name_short == "HUN" & election_year %in% c(2010) ~ "4th generation",
+            country_name_short == "LTU" & election_no > 1 & election_year <= 1996 ~ "2nd generation",
+            country_name_short == "LTU" & election_year %in% c(2000, 2004) ~ "3rd generation",
+            country_name_short == "LVA" & election_no > 1 & election_year <= 1995 ~ "2nd generation",
+            country_name_short == "LVA" & election_year %in% c(1998, 2002) ~ "3rd generation",
+            country_name_short == "POL" & election_no > 1 & election_year <= 1993 ~ "2nd generation",
+            country_name_short == "POL" & election_year %in% c(1997, 2001) ~ "3rd generation",
+            country_name_short == "ROU" & election_no > 1 & election_year <= 1996 ~ "2nd generation",
+            country_name_short == "ROU" & election_year %in% c(2000, 2004, 2008) ~ "3rd generation",
+            # country_name_short == "ROU" & election_year %in% c(2012) ~ "4th generation",
+            country_name_short == "SVK" & election_no > 1 & election_year <= 1998 ~ "2nd generation",
+            country_name_short == "SVK" & election_year %in% c(2002, 2006) ~ "3rd generation",
+            country_name_short == "SVN" & election_no > 1 & election_year <= 2004 ~ "2nd generation",
+            country_name_short == "SVN" & election_year %in% c(2008) ~ "3rd generation",
+            # country_name_short == "SVN" & election_year %in% c(2011) ~ "4th generation", 
+            post_crisis_election2 == "First/Second post-crisis election" ~ "4th generation (2 post-crisis el.)",
+            post_crisis_election2 == "Other post-crisis election" ~ "Other post-crisis"
+        )
+    )
+
+
+chart_data2b %>% 
+    select(election_year, region_type, generation, np_share_nc_1, np_share_cv_1,
+           reward_nc_pm_long, reward_nc_cab_long) %>% 
+    tidyr::pivot_longer(., cols = 4:7) %>% 
+    mutate(name = case_when(
+        name == "np_share_nc_1" ~ "New parties share (%)", 
+        name == "np_share_cv_1" ~ "Genuinely new parties vote share (%)",
+        name == "reward_nc_pm_long" ~ "PM's party change (percentage points)",
+        name == "reward_nc_cab_long" ~ "Government parties change (percentage points)"
+    )) %>% 
+    filter(!is.na(generation)) %>% 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region")), 
+           name = factor(name, levels = c("New parties share (%)", "Genuinely new parties vote share (%)",
+                                          "PM's party change (percentage points)",
+                                          "Government parties change (percentage points)"))) %>% 
+    ggplot(., aes(x = name, y = value, colour = name)) + 
+    geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(width = 0.1) + 
+    facet_wrap(~region_type + generation, scales = "free_x", 
+               nrow = 2) + 
+    scale_colour_viridis_d() + 
+    theme_bw() + 
+    geom_hline(yintercept = 0, linewidth = 0.2) +
+    guides(colour = guide_legend(nrow = 2, byrow = TRUE)) + 
+    theme(legend.position = "top", 
+          panel.grid.major.x = element_blank(), 
+          axis.text.x = element_blank(), 
+          axis.ticks.x = element_blank()) + 
+    labs(x = "", y = "", colour = "")
+
+ggsave("figs/generations5_all_2nd_gen.png", 
        width = 9,
        height = 6,
        units = "in",

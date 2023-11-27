@@ -5,20 +5,23 @@ library(lmtest)
 library(ggplot2)
 library(ggeffects)
 library(estimatr)
+    
+new_parties_data <- readRDS("data/data_final.rds")
 
-data <- readRDS("data/elects_unique_cee.rds") %>% 
-    mutate(year = lubridate::year(election_date), 
+data <- new_parties_data %>% 
+    mutate(year = as.numeric(stringr::str_extract(country_year, "[0-9]+")), 
+           country_name_short = stringr::str_extract(country_year, "[A-Z]+"),
            post_crisis = as.numeric(year > 2008),
            region_type = case_when(
-               country_name %in% c("Croatia", "Czech Republic", "Hungary", 
-                                   "Romania", "Slovenia") ~ "Once stable region", 
-               country_name %in% c("Estonia", "Lithuania", "Latvia", "Poland", 
-                                   "Bulgaria", "Slovakia") ~ "Never stable region"
+               country_name_short %in% c("HRV", "CZE", "HUN", 
+                                   "ROU", "SVN") ~ "Once stable region", 
+               country_name_short %in% c("EST", "LTU", "LVA", "POL", 
+                                   "BGR", "SVK") ~ "Never stable region"
            )) %>% 
-    group_by(country_name) %>% 
-    mutate(election_no = row_number()) %>% 
+    group_by(country_name_short) %>% 
+    mutate(election_no = row_number() + 1) %>% 
     ungroup %>% 
-    group_by(country_name, post_crisis) %>% 
+    group_by(country_name_short, post_crisis) %>% 
     mutate(
         post_crisis_election2 = case_when(
             post_crisis == 0 ~ "Before crisis", 
@@ -49,18 +52,15 @@ data <- readRDS("data/elects_unique_cee.rds") %>%
         )
     )
 
+head(data)
+
 # np_share_nc_1 = všechny nové strany
 # np_share_cv_1 = úplně nové strany
 # np_share_pnp_1 = částečně nové strany
 
-# library(prais)
-# prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
-#               index = c("election_year", "country_name_short"),
-#               data = data, panelwise = TRUE)
-
 used_data <- data %>% 
-    filter(!is.na(np_share_nc_1)) %>% 
-    mutate(country_name_short = factor(country_name_short))
+    mutate(country_name_short = factor(country_name_short)) %>% 
+    rename(rank_election_within_country = election_no)
 
 # Tab 1
 m1a_pw <- prais_winsten(np_share_nc_1 ~ r_year, data = used_data, 
@@ -102,9 +102,10 @@ modelsummary::modelsummary(
         "crisis_election"="Two elections after 2008"
     ),
     stars = TRUE, 
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     notes = PW_NOTE,
-    output = "figs/tab1.html"
+    output = "figs/tab1_final.html"
 )
 
 m7_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election, 
@@ -142,6 +143,7 @@ modelsummary::modelsummary(
     ),
     stars = TRUE,
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2.html"
 )
@@ -193,6 +195,7 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab1_election_rank.html"
 )
@@ -248,6 +251,7 @@ modelsummary::modelsummary(
     ),
     output = "figs/tab1_since_third_election.html",
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     stars = TRUE
 )
@@ -287,6 +291,7 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2_since_third_election.html"
 )
@@ -335,6 +340,7 @@ modelsummary::modelsummary(
     ),
     title = "Models with new party share (legislative threshold)",
     notes = PW_NOTE,
+    fmt = 2,
     output = "figs/tab1_np_share_leg.html",
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     stars = TRUE
@@ -379,6 +385,7 @@ modelsummary::modelsummary(
     stars = TRUE, 
     title = "Models with new party share (legislative threshold)",
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2_np_share_leg.html"
 )
@@ -430,6 +437,7 @@ modelsummary::modelsummary(
     ),
     title = "Models of new party count",
     notes = PW_NOTE,
+    fmt = 2,
     output = "figs/tab1_np_number.html",
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     stars = TRUE
@@ -471,6 +479,7 @@ modelsummary::modelsummary(
     stars = TRUE, 
     title = "Models of new party count",
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab2_np_number.html"
 )
@@ -521,6 +530,7 @@ modelsummary::modelsummary(
     ),
     title = "Models of new party count",
     notes = PW_NOTE,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     output = "figs/tab3_np_number.html",
     stars = TRUE
@@ -561,10 +571,9 @@ modelsummary::modelsummary(
     ),
     stars = TRUE, 
     output = "figs/tab4_np_number.html",
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     title = "Models of new party count", 
     notes = PW_NOTE
 )
-
-# TODO: připravit data
 
