@@ -1,7 +1,7 @@
 library(dplyr)
 library(readxl)
 
-new_parties <- read_excel("data/new_parties_list2_edited_final.xlsx", 
+new_parties <- read_excel("data/new_parties", 
                           sheet = "new dataset")
 
 all_elections <- c(
