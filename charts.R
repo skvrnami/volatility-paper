@@ -360,7 +360,7 @@ bar_chart_data <- final_data %>%
             country_name_short %in% c("HRV", "CZE", "HUN", 
                                 "ROU", "SVN") ~ "Formerly stable region", 
             country_name_short %in% c("EST", "LTU", "LVA", "POL", 
-                                "BGR", "SVK") ~ "Never stable region"
+                                "BGR", "SVK") ~ "Formerly unstable region"
         ),
         generation = case_when(
             country_name_short == "BGR" & election_year %in% c(1994, 1997) ~ "2nd generation",
@@ -405,7 +405,7 @@ bar_chart_data <- final_data %>%
 
 bar1 <- bar_chart_data %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region"))) %>% 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Formerly unstable region"))) %>% 
     ggplot(., aes(x = generation, y = value, fill = name)) + 
     geom_bar(stat = "identity", position = "dodge2") + 
     facet_wrap(~region_type + generation, scales = "free_x") + 
@@ -444,7 +444,7 @@ bar_chart_data2 <- final_data %>%
             country_name_short %in% c("HRV", "CZE", "HUN", 
                                       "ROU", "SVN") ~ "Formerly stable region", 
             country_name_short %in% c("EST", "LTU", "LVA", "POL", 
-                                      "BGR", "SVK") ~ "Never stable region"
+                                      "BGR", "SVK") ~ "Formerly unstable region"
         ),
         generation = case_when(
             country_name_short == "BGR" & election_year %in% c(1994, 1997) ~ "2nd generation",
@@ -492,7 +492,7 @@ bar_chart_data2 <- final_data %>%
 
 bar_chart_data2 %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region"))) %>% 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Formerly unstable region"))) %>% 
     ggplot(., aes(x = generation, y = value, fill = name)) + 
     geom_bar(stat = "identity", position = "dodge2") + 
     facet_wrap(~region_type + generation, scales = "free_x") + 
@@ -522,7 +522,7 @@ chart_data2 <- final_data %>%
             country_name_short %in% c("HRV", "CZE", "HUN", 
                                       "ROU", "SVN") ~ "Formerly stable region", 
             country_name_short %in% c("EST", "LTU", "LVA", "POL", 
-                                      "BGR", "SVK") ~ "Never stable region"
+                                      "BGR", "SVK") ~ "Formely unstable region"
         ),
         generation = case_when(
             country_name_short == "BGR" & election_year %in% c(1991, 1994, 1997) ~ "2nd generation",
@@ -586,7 +586,7 @@ chart_data2 %>%
         name == "reward_nc_cab_long" ~ "Government parties change (percentage points)"
     )) %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region")), 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Formely unstable region")), 
            name = factor(name, levels = c("New parties share (%)", "Genuinely new parties vote share (%)",
                                           "PM's party change (percentage points)",
                                           "Government parties change (percentage points)"))) %>% 
@@ -626,7 +626,7 @@ new_parties_eng <-
            "Partially new parties, threshold" = np_share_pnp_leg,
            "Partially new parties, 1%" = np_share_pnp_1) %>% 
     mutate(region = case_when(
-        country_name_short %in% c("POL", "EST", "LVA", "SVK", "LTU", "BGR") ~ "'Never stable' region (Baltic states, Bulgaria, Poland, Slovakia)", 
+        country_name_short %in% c("POL", "EST", "LVA", "SVK", "LTU", "BGR") ~ "'Formerly unstable' region (Baltic states, Bulgaria, Poland, Slovakia)", 
         country_name_short %in% c("SVN", "CZE", "HRV", "ROU", "HUN") ~ "'Formerly stable' region (Croatia, Czechia, Hungary, Romania, Slovenia)"
     ))
 
@@ -683,7 +683,7 @@ chart_data2b <- final_data %>%
             country_name_short %in% c("HRV", "CZE", "HUN", 
                                       "ROU", "SVN") ~ "Formerly stable region", 
             country_name_short %in% c("EST", "LTU", "LVA", "POL", 
-                                      "BGR", "SVK") ~ "Never stable region"
+                                      "BGR", "SVK") ~ "Formely unstable region"
         ),
         generation = case_when(
             country_name_short == "BGR" & election_no > 1 & election_year <= 1997 ~ "2nd generation",
@@ -729,7 +729,7 @@ chart_data2b %>%
         name == "reward_nc_cab_long" ~ "Government parties change (percentage points)"
     )) %>% 
     filter(!is.na(generation)) %>% 
-    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Never stable region")), 
+    mutate(region_type = factor(region_type, levels = c("Formerly stable region", "Formely unstable region")), 
            name = factor(name, levels = c("New parties share (%)", "Genuinely new parties vote share (%)",
                                           "PM's party change (percentage points)",
                                           "Government parties change (percentage points)"))) %>% 
@@ -1062,9 +1062,11 @@ new_parties_eng <-
            "Partially new parties, threshold" = np_number_pnp_leg,
            "Partially new parties, 1%" = np_number_pnp_1) %>% 
     mutate(region = case_when(
-        country_name_short %in% c("POL", "EST", "LVA", "SVK", "LTU", "BGR") ~ "'Never stable' region (Baltic states, Bulgaria, Poland, Slovakia)", 
+        country_name_short %in% c("POL", "EST", "LVA", "SVK", "LTU", "BGR") ~ "'Formely unstable' region (Baltic states, Bulgaria, Poland, Slovakia)", 
         country_name_short %in% c("SVN", "CZE", "HRV", "ROU", "HUN") ~ "'Formerly stable' region (Croatia, Czechia, Hungary, Romania, Slovenia)"
-    ))
+    )) %>% 
+    mutate(region = factor(region, levels = c("'Formerly stable' region (Croatia, Czechia, Hungary, Romania, Slovenia)", 
+                                              "'Formely unstable' region (Baltic states, Bulgaria, Poland, Slovakia)")))
 
 new_parties_eng %>% 
     # mutate(is_czech = if_else(country_name_short == "CZE", 1,0)) %>% 

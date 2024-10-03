@@ -1,6 +1,7 @@
 library(prais)
 library(broom)
 library(dplyr)
+library(haven)
 library(lmtest)
 library(ggplot2)
 library(ggeffects)
@@ -52,7 +53,46 @@ data <- new_parties_data %>%
         )
     )
 
+restrained_change <- read_dta("data/casal_bertoa_weber_data/restrained_change_repl.dta") %>% 
+    as_factor() %>% 
+    select(country, year = yearmonth, restraint_pre) %>% 
+    mutate(year = as.numeric(year), 
+           country = as.character(country)) %>% 
+    mutate(country = case_when(
+        country == "BUL" ~ "BGR",
+        country == "CRO" ~ "HRV",
+        country == "LAT" ~ "LVA",
+        country == "LIT" ~ "LTU",
+        country == "ROM" ~ "ROU",
+        country == "SLK" ~ "SVK",
+        country == "SLV" ~ "SVN",
+        TRUE ~ country
+    ))
+    
+
 head(data)
+unique(data$country_name_short)[!unique(data$country_name_short) %in% unique(restrained_change$country)]
+
+data_restrained <- data %>% 
+    left_join(restrained_change, by = c("country_name_short"="country", 
+                                        "year")) %>% 
+    mutate(country_name_short = factor(country_name_short)) %>% 
+    rename(rank_election_within_country = election_no) %>% 
+    group_by(country_name_short) %>% 
+    mutate(n_postcrisis = cumsum(post_crisis)) %>% 
+    mutate(restraint_pre = zoo::na.locf(restraint_pre, na.rm = FALSE) %>% 
+               zoo::na.locf0(., fromLast = TRUE)) %>% 
+    ungroup %>% 
+    group_by(country_name_short, post_crisis) %>% 
+    arrange(desc(year)) %>% 
+    mutate(
+        row = row_number(),
+        n_precrisis = if_else(
+        post_crisis == 0, row, 0
+    )) %>% 
+    select(-row) %>% 
+    ungroup
+    
 
 # np_share_nc_1 = všechny nové strany
 # np_share_cv_1 = úplně nové strany
@@ -576,4 +616,75 @@ modelsummary::modelsummary(
     title = "Models of new party count", 
     notes = PW_NOTE
 )
+
+
+
+m10_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * restraint_pre,
+                        data = data_restrained, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary::modelsummary(m10_pw, stars = TRUE)
+
+tidy(m10_pw)
+
+predicted_values <- tidyr::expand_grid(
+    restraint_pre = c(-2, -1, 0),
+    crisis_election = c(0, 1)
+) %>% 
+    mutate(year = 16) %>% 
+    mutate(predicted_value = 8.24 + -0.4 * year + 24.2 * crisis_election + -15.8*restraint_pre + 22.1 * crisis_election * restraint_pre)
+
+ggplot(predicted_values, aes(x = restraint_pre, y = predicted_value, colour = factor(crisis_election))) + 
+    geom_point() + 
+    geom_line() + 
+    theme_minimal()
+
+m10_pw3 <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * restraint_pre,
+                        data = data_restrained %>% 
+                            filter((post_crisis == 0 & n_precrisis <= 3) | 
+                                       (post_crisis == 1 & n_postcrisis <= 3)), 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary::modelsummary(m10_pw3, stars = TRUE)
+
+tidy(m10_pw3)
+
+predicted_values3 <- tidyr::expand_grid(
+    restraint_pre = c(-2, -1, 0),
+    crisis_election = c(0, 1)
+) %>% 
+    mutate(year = 16) %>% 
+    mutate(predicted_value = 10.0 + -0.46 * year + 23.2 * crisis_election + -12.7*restraint_pre + 17.5 * crisis_election * restraint_pre)
+
+ggplot(predicted_values3, aes(x = restraint_pre, y = predicted_value, colour = factor(crisis_election))) + 
+    geom_point() + 
+    geom_line() + 
+    theme_minimal()
+
+
+m10_pw_b <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * region_type,
+                        data = data_restrained, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary::modelsummary(m10_pw_b, stars = TRUE)
+
+tidy(m10_pw_b)
+
+predicted_values_b <- tidyr::expand_grid(
+    once_stable = c(0, 1),
+    crisis_election = c(0, 1)
+) %>% 
+    mutate(year = 16) %>% 
+    mutate(predicted_value = 25.4 + -0.35 * year + -2.64 * crisis_election + -11.9*once_stable + 20.6 * crisis_election * once_stable)
+
+ggplot(predicted_values_b, aes(x = crisis_election, y = predicted_value, colour = factor(once_stable))) + 
+    geom_point() + 
+    geom_line() + 
+    theme_minimal()
 
