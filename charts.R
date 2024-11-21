@@ -204,7 +204,7 @@ new_party_share <- new_parties %>%
 (ch3_pnp_parties + share_pnp_chart) +
     plot_annotation(tag_levels = list(c("A", "B")))
 
-ggsave("figs/chart3.png",
+ggsave("figs/fig1.png",
        plot = last_plot(),
        width = 6,
        height = 7,
@@ -345,7 +345,7 @@ new_party_share_app <- new_parties %>%
     (ch3_pnp_parties_app + share_pnp_chart_app) +
     plot_annotation(tag_levels = list(c("A", "B")))
 
-ggsave("figs/chart3_appendix.png",
+ggsave("figs/fig_a1.png",
        plot = last_plot(),
        width = 6,
        height = 7,
@@ -991,7 +991,7 @@ np_number_hist_en %>%
          #caption = "Historgram je definován takovým způsobem, že první sloupec obsahuje jen volby s nulovým ziskem.\nVertikální přerušovaná čára představuje průměrný volební zisk nových stran.")+
     )
     
-ggsave("figs/app_a4B.png",
+ggsave("figs/fig_a2.png",
        plot = last_plot(),
        width = 6,
        height = 7,
@@ -1039,7 +1039,7 @@ new_parties_number %>%
     guides(color = "none") + 
     theme_bw()
 
-ggsave("figs/app_a4C.png",
+ggsave("figs/fig_a3.png",
        plot = last_plot(),
        width = 6,
        height = 7,

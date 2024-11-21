@@ -1,7 +1,10 @@
 library(dplyr)
 library(readxl)
+library(haven)
 
-new_parties <- read_excel("data/new_parties.xlsx", 
+restrained_change_repl <- read_dta("data/casal_bertoa_weber_data/restrained_change_repl.dta")
+
+new_parties <- read_excel("data/new_parties (1).xlsx", 
                           sheet = "new dataset")
 
 all_elections <- c(
@@ -80,3 +83,7 @@ final_data <- left_join(new_parties_data, punish_data, by = "country_year") %>%
            election_year = as.numeric(stringr::str_extract(country_year, "[0-9]+")))
 
 saveRDS(final_data, "data/data_final.rds")
+
+
+
+

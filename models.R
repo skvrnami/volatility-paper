@@ -29,6 +29,11 @@ data <- new_parties_data %>%
             post_crisis == 1 & row_number() %in% 1:2 ~ "First/Second post-crisis election", 
             post_crisis == 1 ~ "Other post-crisis election"
         ),
+        post_crisis_election3 = case_when(
+            post_crisis == 0 ~ "Before crisis", 
+            post_crisis == 1 & row_number() %in% 1:3~ "1-3 post-crisis election", 
+            post_crisis == 1 ~ "Other post-crisis election"
+        ),
         time_2008 = row_number()
     ) %>% 
     ungroup %>% 
@@ -37,6 +42,9 @@ data <- new_parties_data %>%
         crisis_election = as.numeric(
             post_crisis_election2 == "First/Second post-crisis election"
         ), 
+        crisis_election3 = as.numeric(
+            post_crisis_election3 == "1-3 post-crisis election"
+        ),
         fst_snd_election = case_when(
             country_name_short == "BGR" & year %in% c(1990, 1991) ~ TRUE, 
             country_name_short == "CZE" & year %in% c(1990, 1992) ~ TRUE, 
@@ -111,6 +119,11 @@ m1b_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election,
               data = used_data, index = c("country_name_short", "year"), 
               twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+m1c_pw <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election3, 
+                        data = used_data, index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 m2a_pw <- prais_winsten(np_share_cv_1 ~ r_year, data = used_data, 
                         index = c("country_name_short", "year"), 
                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
@@ -120,6 +133,12 @@ m2b_pw <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election,
                         index = c("country_name_short", "year"), 
                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+m2c_pw <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election3, 
+                        data = used_data, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 m3a_pw <- prais_winsten(np_share_pnp_1 ~ r_year, data = used_data, 
                         index = c("country_name_short", "year"), 
                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
@@ -128,18 +147,26 @@ m3b_pw <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election,
                         data = used_data, index = c("country_name_short", "year"), 
                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+m3c_pw <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election3, 
+                        data = used_data, index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 PW_NOTE <- "Models estimated using Prais-Winsten regression with panel-corrected standard errors."
 modelsummary::modelsummary(
     list("All new parties" = m1a_pw, 
          "All new parties" = m1b_pw, 
+         "All new parties" = m1c_pw, 
          "Genuinely new parties" = m2a_pw, 
          "Genuinely new parties" = m2b_pw, 
+         "Genuinely new parties" = m2c_pw, 
          "Partially new parties" = m3a_pw, 
-         "Partially new parties" = m3b_pw), 
+         "Partially new parties" = m3b_pw, 
+         "Partially new parties" = m3c_pw), 
     coef_rename = c(
         "r_year"="Year (0 = 1991)", 
-        "crisis_election"="Two elections after 2008"
+        "crisis_election"="Two elections after 2008", 
+        "crisis_election3"="Three elections after 2008"
     ),
     stars = TRUE, 
     fmt = 2,
