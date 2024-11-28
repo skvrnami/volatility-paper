@@ -715,3 +715,108 @@ ggplot(predicted_values_b, aes(x = crisis_election, y = predicted_value, colour 
     geom_line() + 
     theme_minimal()
 
+# Restrained change pseudo-replication --------------------
+library(psych)
+
+econ_data <- read_excel("data/API_NY.GDP.PCAP.KD.ZG_DS2_en_excel_v2_306.xls", 
+                        skip = 3) %>% 
+    clean_names() %>% 
+    filter(country_name %in% c("Bulgaria", "Croatia", "Czechia",
+                          "Estonia", "Hungary", "Latvia", 
+                          "Lithuania", "Poland", "Romania", 
+                          "Slovak Republic", "Slovenia")) %>% 
+    select(country_code, starts_with("x")) %>%
+    pivot_longer(., cols = starts_with("x"), 
+                 names_to = "year", values_to = "gdp_growth") %>% 
+    mutate(year = as.numeric(gsub("x", "", year))) %>% 
+    filter(!is.na(gdp_growth))
+
+econ_growth <- econ_data %>% 
+    mutate(gdp_growth_rates = 1 + gdp_growth / 100) %>% 
+    filter(year >= 2007)
+
+avg_growth_rates_since_2007 <- purrr::map_df(2008:2020, function(x) {
+    econ_growth %>% 
+        filter(year <= x) %>% 
+        group_by(country_code) %>% 
+        summarise(avg_growth_pct = (geometric.mean(gdp_growth_rates) - 1) * 100) %>% 
+        ungroup %>% 
+        mutate(election_year = x)
+})
+
+avg_pre_crisis_support <- data %>% 
+    group_by(country_name_short, post_crisis) %>% 
+    mutate(n_election_before_crisis = case_when(
+        post_crisis == 0 ~ n() - row_number() + 1,
+        TRUE ~ NA_integer_
+    )) %>% 
+    ungroup %>% 
+    filter(n_election_before_crisis <= 3) %>% 
+    group_by(country_name_short) %>% 
+    summarise(
+        across(c("np_share_nc_1", "np_share_cv_1", "np_share_pnp_1"), 
+               ~mean(.x), .names = "pre_crisis_{.col}")
+    )
+
+post_crisis_elections <- data %>% 
+    filter(year >= 2009) %>% 
+    left_join(avg_pre_crisis_support, by = "country_name_short") %>% 
+    mutate(
+        diff_np_share_nc_1 = np_share_nc_1 - pre_crisis_np_share_nc_1,
+        diff_np_share_cv_1 = np_share_cv_1 - pre_crisis_np_share_cv_1,
+        diff_np_share_pnp_1 = np_share_pnp_1 - pre_crisis_np_share_pnp_1
+    ) %>% 
+    left_join(., avg_growth_rates_since_2007, 
+              by = c("country_name_short"="country_code", "election_year")) %>% 
+    left_join(., restrained_change, by = c("country_name_short"="country", 
+                                           "year")) %>% 
+    group_by(country_name_short) %>% 
+    fill(., c(restraint_pre), .direction = "down") %>% 
+    mutate(n_election_post_crisis = row_number()) %>% 
+    ungroup %>% 
+    select(country_name_short, year, starts_with("diff"), avg_growth_pct, 
+           everything()) 
+
+post_crisis_elections3 <- post_crisis_elections %>% 
+    filter(n_election_post_crisis <= 3)
+
+# TODO: omezit na troje volby
+mr0_np <- prais_winsten(diff_np_share_nc_1 ~ 1,
+                        data = post_crisis_elections3, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+mr0_pnp <- prais_winsten(diff_np_share_pnp_1 ~ 1,
+                         data = post_crisis_elections3, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+mr0_cv <- prais_winsten(diff_np_share_cv_1 ~ 1,
+                        data = post_crisis_elections3, 
+                        index = c("country_name_short", "year"), 
+                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+mr1_np <- prais_winsten(diff_np_share_nc_1 ~ avg_growth_pct + restraint_pre,
+              data = post_crisis_elections3, 
+              index = c("country_name_short", "year"), 
+              twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+mr1_pnp <- prais_winsten(diff_np_share_pnp_1 ~ avg_growth_pct + restraint_pre,
+                     data = post_crisis_elections3, 
+                     index = c("country_name_short", "year"), 
+                     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+mr1_cv <- prais_winsten(diff_np_share_cv_1 ~ avg_growth_pct + restraint_pre,
+                         data = post_crisis_elections3, 
+                         index = c("country_name_short", "year"), 
+                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary(list(mr0_np, mr0_pnp, mr0_cv,
+                  mr1_np, mr1_pnp, mr1_cv), stars = TRUE)
+
