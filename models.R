@@ -1,3 +1,4 @@
+library(tidyr)
 library(prais)
 library(broom)
 library(psych)
@@ -5,6 +6,7 @@ library(dplyr)
 library(haven)
 library(lmtest)
 library(ggplot2)
+library(janitor)
 library(ggeffects)
 library(estimatr)
 library(modelsummary)
@@ -80,15 +82,18 @@ restrained_change <- read_dta("data/casal_bertoa_weber_data/restrained_change_re
     ))
     
 
+restraint_data <- restrained_change %>% 
+    filter(year > 1990) %>% 
+    select(country, restraint_pre) %>% 
+    unique() %>% 
+    filter(country %in% data$country_name_short) %>% 
+    mutate(restraint_pre_norm = restraint_pre - mean(restraint_pre))
+
 data_restrained <- data %>% 
-    left_join(restrained_change, by = c("country_name_short"="country", 
-                                        "year")) %>% 
     mutate(country_name_short = factor(country_name_short)) %>% 
     rename(rank_election_within_country = election_no) %>% 
     group_by(country_name_short) %>% 
     mutate(n_postcrisis = cumsum(post_crisis)) %>% 
-    mutate(restraint_pre = zoo::na.locf(restraint_pre, na.rm = FALSE) %>% 
-               zoo::na.locf0(., fromLast = TRUE)) %>% 
     ungroup %>% 
     group_by(country_name_short, post_crisis) %>% 
     arrange(desc(year)) %>% 
@@ -98,7 +103,8 @@ data_restrained <- data %>%
         post_crisis == 0, row, 0
     )) %>% 
     select(-row) %>% 
-    ungroup
+    ungroup %>% 
+    left_join(., restraint_data, by = c("country_name_short"="country"))
     
 # np_share_nc_1 = všechny nové strany
 # np_share_cv_1 = úplně nové strany
@@ -173,19 +179,19 @@ modelsummary(
     output = "figs/tab1_final.html"
 )
 
-m10_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * restraint_pre,
+m10_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * restraint_pre_norm,
                         data = data_restrained, 
                         index = c("country_name_short", "year"), 
                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
-m10_pw_cv <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election * restraint_pre,
+m10_pw_cv <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election * restraint_pre_norm,
                        data = data_restrained, 
                        index = c("country_name_short", "year"), 
                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
-m10_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election * restraint_pre,
+m10_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election * restraint_pre_norm,
                            data = data_restrained, 
                            index = c("country_name_short", "year"), 
                            twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
@@ -199,8 +205,8 @@ modelsummary(
         "r_year"="Year (0 = 1991)", 
         "crisis_election"="Two elections after 2008", 
         "region_typeOnce stable region" = "Once stable region", 
-        "restraint_pre" = "Party restraint (pre-crisis)", 
-        "crisis_election:restraint_pre" = "Two elections after 2008 × Party restraint (pre-crisis)"
+        "restraint_pre_norm" = "Party restraint (pre-crisis)", 
+        "crisis_election:restraint_pre_norm" = "Two elections after 2008 × Party restraint (pre-crisis)"
     ),
     stars = TRUE,
     notes = PW_NOTE,
@@ -209,19 +215,19 @@ modelsummary(
     output = "figs/tab2.html"
 )
 
-m11_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election3 * restraint_pre,
+m11_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election3 * restraint_pre_norm,
                            data = data_restrained, 
                            index = c("country_name_short", "year"), 
                            twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
-m11_pw_cv <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election3 * restraint_pre,
+m11_pw_cv <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election3 * restraint_pre_norm,
                            data = data_restrained, 
                            index = c("country_name_short", "year"), 
                            twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
-m11_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election3 * restraint_pre,
+m11_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election3 * restraint_pre_norm,
                             data = data_restrained, 
                             index = c("country_name_short", "year"), 
                             twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
@@ -235,8 +241,8 @@ modelsummary(
         "r_year"="Year (0 = 1991)", 
         "crisis_election3"="Three elections after 2008", 
         "region_typeOnce stable region" = "Once stable region", 
-        "restraint_pre" = "Party restraint (pre-crisis)", 
-        "crisis_election3:restraint_pre" = "Three elections after 2008 × Party restraint (pre-crisis)"
+        "restraint_pre_norm" = "Party restraint (pre-crisis)", 
+        "crisis_election3:restraint_pre_norm" = "Three elections after 2008 × Party restraint (pre-crisis)"
     ),
     stars = TRUE,
     notes = PW_NOTE,
@@ -746,6 +752,7 @@ ggplot(predicted_values_b, aes(x = crisis_election, y = predicted_value, colour 
     theme_minimal()
 
 # Restrained change pseudo-replication --------------------
+library(readxl)
 econ_data <- read_excel("data/API_NY.GDP.PCAP.KD.ZG_DS2_en_excel_v2_306.xls", 
                         skip = 3) %>% 
     clean_names() %>% 
@@ -788,6 +795,7 @@ avg_pre_crisis_support <- data %>%
 
 post_crisis_elections <- data %>% 
     filter(year >= 2009) %>% 
+    left_join(., restraint_data, by = c("country_name_short"="country")) %>% 
     left_join(avg_pre_crisis_support, by = "country_name_short") %>% 
     mutate(
         diff_np_share_nc_1 = np_share_nc_1 - pre_crisis_np_share_nc_1,
@@ -796,17 +804,14 @@ post_crisis_elections <- data %>%
     ) %>% 
     left_join(., avg_growth_rates_since_2007, 
               by = c("country_name_short"="country_code", "election_year")) %>% 
-    left_join(., restrained_change, by = c("country_name_short"="country", 
-                                           "year")) %>% 
     group_by(country_name_short) %>% 
-    fill(., c(restraint_pre), .direction = "down") %>% 
     mutate(n_election_post_crisis = row_number()) %>% 
     ungroup %>% 
     select(country_name_short, year, starts_with("diff"), avg_growth_pct, 
            everything()) 
 
 post_crisis_elections3 <- post_crisis_elections %>% 
-    filter(n_election_post_crisis <= 3)
+    filter(n_election_post_crisis <= 3) 
 
 mr0_np <- prais_winsten(diff_np_share_nc_1 ~ 1,
                         data = post_crisis_elections3, 
@@ -844,14 +849,27 @@ mr1_cv <- prais_winsten(diff_np_share_cv_1 ~ avg_growth_pct + restraint_pre,
                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
-modelsummary(list("Genuinely new parties" = mr0_cv,
-                  "Partially new parties" = mr0_pnp, 
-                  "All new parties" = mr0_np, 
-                  "Genuinely new parties" = mr1_cv,
-                  "Partially new parties" = mr1_pnp, 
-                  "All new parties" = mr1_np), 
+modelsummary(list("Δ Genuinely new parties" = mr0_cv,
+                  "Δ Partially new parties" = mr0_pnp, 
+                  "Δ All new parties" = mr0_np, 
+                  "Δ Genuinely new parties" = mr1_cv,
+                  "Δ Partially new parties" = mr1_pnp, 
+                  "Δ All new parties" = mr1_np), 
              stars = TRUE, 
              coef_rename = c("avg_growth_pct"="Avg. growth", 
-                             "restraint_pre"="Party restraint"), 
+                             "restraint_pre_norm"="Party restraint"), 
              output = "figs/tab3.html")
 
+tidy(mr1_cv)
+
+predicted_values_c <- tidyr::expand_grid(
+    avg_growth_pct = -2:4,
+    restraint_pre_norm = -1:1
+    
+) %>% 
+    mutate(predicted_value = 2.87 + 0.448 * avg_growth_pct + 15.3 * restraint_pre_norm)
+
+ggplot(predicted_values_c, aes(x = restraint_pre_norm, y = predicted_value, colour = factor(avg_growth_pct))) + 
+    geom_point() + 
+    geom_line() + 
+    theme_minimal()
