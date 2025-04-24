@@ -180,10 +180,10 @@ modelsummary(
         "crisis_election3"="Three elections after 2008"
     ),
     stars = TRUE, 
-    fmt = 4,
+    fmt = 2,
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     notes = PW_NOTE,
-    # output = "figs/tab1_final.html"
+    output = "figs/tab1_final.html"
 )
 
 ## Tab 2 --------------------------------------------------
@@ -262,6 +262,24 @@ modelsummary(
 
 ## Tab 2 - 3 elections ------------------------------------
 
+m10_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election3,
+                           data = data_restrained, 
+                           index = c("country_name_short", "year"), 
+                           twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election3,
+                           data = data_restrained, 
+                           index = c("country_name_short", "year"), 
+                           twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election3,
+                            data = data_restrained, 
+                            index = c("country_name_short", "year"), 
+                            twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+    coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 m11_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election3 * restraint_pre_norm,
                            data = data_restrained, 
                            index = c("country_name_short", "year"), 
@@ -281,8 +299,12 @@ m11_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election3 * restrai
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary(
-    list("All new parties" = m11_pw_nc, 
+    list(
+        "All new parties" = m10_pw_nc, 
+         "All new parties" = m11_pw_nc, 
+         "Genuinely new parties" = m10_pw_cv, 
          "Genuinely new parties" = m11_pw_cv, 
+         "Partially new parties" = m10_pw_pnp,
          "Partially new parties" = m11_pw_pnp), 
     coef_rename = c(
         "r_year"="Year (0 = 1991)", 
@@ -518,32 +540,32 @@ modelsummary(list("Δ Genuinely new parties" = mr0_cv2,
 ## Tab 3 - OLS w/ clustered SEs ----------------------------
 mr0_np <- lm_robust(diff_np_share_nc_1 ~ 1,
                     data = post_crisis_elections3, 
-                    clusters = c(country_name_short), 
+                    clusters = country_name_short, 
                     se_type = "stata")
 
 mr0_pnp <- lm_robust(diff_np_share_pnp_1 ~ 1,
                      data = post_crisis_elections3, 
-                     clusters = c(country_name_short), 
+                     clusters = country_name_short, 
                      se_type = "stata")
 
 mr0_cv <- lm_robust(diff_np_share_cv_1 ~ 1,
                     data = post_crisis_elections3, 
-                    clusters = c(country_name_short), 
+                    clusters = country_name_short, 
                     se_type = "stata")
 
 mr1_np <- lm_robust(diff_np_share_nc_1 ~ avg_growth_pct + restraint_pre,
                     data = post_crisis_elections3, 
-                    clusters = c(country_name_short), 
+                    clusters = country_name_short, 
                     se_type = "stata")
 
 mr1_pnp <- lm_robust(diff_np_share_pnp_1 ~ avg_growth_pct + restraint_pre,
                      data = post_crisis_elections3, 
-                     clusters = c(country_name_short), 
+                     clusters = country_name_short, 
                      se_type = "stata")
 
 mr1_cv <- lm_robust(diff_np_share_cv_1 ~ avg_growth_pct + restraint_pre,
                     data = post_crisis_elections3, 
-                    clusters = c(country_name_short), 
+                    clusters = country_name_short, 
                     se_type = "stata")
 
 modelsummary(list("Δ Genuinely new parties" = mr0_cv,
@@ -552,10 +574,11 @@ modelsummary(list("Δ Genuinely new parties" = mr0_cv,
                   "Δ Genuinely new parties" = mr1_cv,
                   "Δ Partially new parties" = mr1_pnp, 
                   "Δ All new parties" = mr1_np), 
-             stars = TRUE, 
-             coef_rename = c("avg_growth_pct"="Avg. growth", 
-                             "restraint_pre"="Party restraint"), 
-             output = "figs/tab3.html")
+             stars = TRUE,
+             coef_rename = c("avg_growth_pct"="Avg. growth",
+                             "restraint_pre"="Party restraint"),
+             # output = "figs/tab3.html"
+             )
 
 # models with legislative threshold -------------------------------
 ## Tab 1 -----------------------------

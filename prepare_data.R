@@ -6,7 +6,7 @@ library(haven)
 
 restrained_change_repl <- read_dta("data/casal_bertoa_weber_data/restrained_change_repl.dta")
 
-new_parties <- read_excel("data/new_parties (1).xlsx", 
+new_parties <- read_excel("data/new_parties_final.xlsx", 
                           sheet = "new dataset")
 
 all_elections <- c(
