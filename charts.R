@@ -57,7 +57,7 @@ chart3_data <- np_share_hist_en %>%
     filter(name == "All new parties, 1%") %>% 
     ggplot(aes(x = value))+
     geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white") +
-    geom_text(aes(x = 16.4 + 4, y = 25, label = sprintf("%1.1f%%", 16.4))) +
+    geom_text(aes(x = 15.4 + 4, y = 25, label = sprintf("%1.1f%%", 15.4))) +
     geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
     scale_x_continuous(labels = label_percent(scale = 1))+
     scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
@@ -74,7 +74,7 @@ chart3_data <- np_share_hist_en %>%
         filter(name == "Genuinely new parties, 1%") %>% 
         ggplot(aes(x = value))+
         geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
-        geom_text(aes(x = 10.3 + 4, y = 25, label = sprintf("%1.1f%%", 10.3))) +
+        geom_text(aes(x = 10.1 + 4, y = 25, label = sprintf("%1.1f%%", 10.1))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
         scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
@@ -91,7 +91,7 @@ chart3_data <- np_share_hist_en %>%
         filter(name == "Partially new parties, 1%") %>% 
         ggplot(aes(x = value))+
         geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white") +
-        geom_text(aes(x = 6 + 3, y = 30, label = sprintf("%1.1f%%", 6))) +
+        geom_text(aes(x = 5.3 + 3, y = 30, label = sprintf("%1.1f%%", 5.3))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
         scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(breaks = seq(0, 40, 10), minor_breaks = seq(2, 10, 2), 
@@ -233,8 +233,8 @@ chart3_data_app <- np_share_hist_en %>%
         filter(name == "All new parties, threshold") %>% 
         ggplot(aes(x = value))+
         geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
-        geom_text(aes(x = 14.8 + 4, y = 25, label = sprintf("%1.1f%%", 14.8))) +
-        geom_vline(aes(xintercept = 14.8), linetype = "dashed", alpha = 0.5)+
+        geom_text(aes(x = 14.5 + 4, y = 25, label = sprintf("%1.1f%%", 14.5))) +
+        geom_vline(aes(xintercept = 14.5), linetype = "dashed", alpha = 0.5)+
         scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
                            limits = c(0, 60))+
@@ -250,9 +250,9 @@ chart3_data_app <- np_share_hist_en %>%
         filter(name == "Genuinely new parties, threshold") %>% 
         ggplot(aes(x = value))+
         geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
-        geom_text(aes(x = 10.6 + 4, y = 25, label = sprintf("%1.1f%%", 10.6))) +
+        geom_text(aes(x = 10.3 + 4, y = 25, label = sprintf("%1.1f%%", 10.3))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
-        scale_x_continuous(labels = label_percent())+
+        scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
                            limits = c(0, 60))+
         labs(x = "",
@@ -267,7 +267,7 @@ chart3_data_app <- np_share_hist_en %>%
         filter(name == "Partially new parties, threshold") %>% 
         ggplot(aes(x = value))+
         geom_histogram(bins = 12, breaks = seq(-5,50,5), color = "white")+
-        geom_text(aes(x = 4.2 + 4, y = 30, label = sprintf("%1.1f%%", 4.2))) +
+        geom_text(aes(x = 4.1 + 4, y = 30, label = sprintf("%1.1f%%", 4.1))) +
         geom_vline(aes(xintercept = mean), linetype = "dashed", alpha = 0.5)+
         scale_x_continuous(labels = label_percent(scale = 1))+
         scale_y_continuous(minor_breaks = seq(2,10,2), breaks = seq(0,40,10), 
@@ -298,7 +298,7 @@ new_party_share_app <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(scale= 1, suffix = "%")) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -314,7 +314,7 @@ new_party_share_app <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(scale = 1, suffix = "%")) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -330,7 +330,7 @@ new_party_share_app <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %")) + 
+        scale_y_continuous(labels = percent_format(scale = 1, suffix = "%")) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -883,7 +883,7 @@ new_party_share <- new_parties %>%
         ggplot(aes(x = election_year, y = value))+
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", scale = 1)) + 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = "%", scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
              y=element_blank(),
@@ -902,7 +902,7 @@ new_party_share <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = "%", 
                                                    scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
@@ -919,7 +919,7 @@ new_party_share <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = "%", 
                                                    scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
@@ -936,7 +936,7 @@ new_party_share <- new_parties %>%
         geom_point(alpha=0.5)+
         geom_smooth(se = FALSE, method = "loess", aes(group = 1), 
                     linetype = "solid", color = "goldenrod3")+
-        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = " %", 
+        scale_y_continuous(labels = percent_format(accuracy = 1, suffix = "%", 
                                                    scale = 1)) + 
         scale_x_continuous(breaks = seq(1990, 2020, 2), guide = guide_axis(angle = 90))+
         labs(x=element_blank(), 
@@ -978,7 +978,7 @@ np_number_hist_en %>%
     mutate(mean = mean(value)) %>% 
     ungroup() %>% 
     ggplot(aes(x = value, group = name))+
-    geom_histogram(bins = 12, color = "white") + 
+    geom_histogram(bins = 10, color = "white") + 
     geom_text(aes(x = mean + 1, y = 30, label = sprintf("%1.2f", mean)),
               data = . %>% select(name, mean) %>%
                   unique()) +

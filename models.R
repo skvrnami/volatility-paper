@@ -430,6 +430,10 @@ mr1_cv <- prais_winsten(diff_np_share_cv_1 ~ avg_growth_pct + restraint_pre,
                          twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>%
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
+post_crisis_elections3 %>% 
+    filter(country_name_short == "LVA") %>% 
+    select(avg_growth_pct, restraint_pre, year)
+
 modelsummary(list("Δ Genuinely new parties" = mr0_cv,
                   "Δ Partially new parties" = mr0_pnp, 
                   "Δ All new parties" = mr0_np, 
