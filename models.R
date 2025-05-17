@@ -14,11 +14,18 @@ library(modelsummary)
     
 new_parties_data <- readRDS("data/data_final.rds")
 
+new_parties_data |> 
+    select(country_name_short, election_year, 
+            contains("share"), contains("number")) |> 
+    writexl::write_xlsx(path = "data/new_parties_aggregated.xlsx")
+
 data <- new_parties_data %>% 
     mutate(year = as.numeric(stringr::str_extract(country_year, "[0-9]+")), 
            country_name_short = stringr::str_extract(country_year, "[A-Z]+"),
            post_crisis = as.numeric(year > 2008),
            crisis_election_2016 = as.numeric(year > 2008 & year <= 2016),
+           crisis_election_2014 = as.numeric(year > 2008 & year <= 2014), 
+           crisis_election_2015 = as.numeric(year > 2008 & year <= 2015),
            region_type = case_when(
                country_name_short %in% c("HRV", "CZE", "HUN", 
                                    "ROU", "SVN") ~ "Once stable region", 
@@ -30,6 +37,11 @@ data <- new_parties_data %>%
     ungroup %>% 
     group_by(country_name_short, post_crisis) %>% 
     mutate(
+        post_crisis_election1 = case_when(
+            post_crisis == 0 ~ "Before crisis", 
+            post_crisis == 1 & row_number() == 1 ~ "First post-crisis election", 
+            post_crisis == 1 ~ "Other post-crisis election"
+        ),
         post_crisis_election2 = case_when(
             post_crisis == 0 ~ "Before crisis", 
             post_crisis == 1 & row_number() %in% 1:2 ~ "First/Second post-crisis election", 
@@ -45,6 +57,7 @@ data <- new_parties_data %>%
     ungroup %>% 
     mutate(
         r_year = year - 1991, 
+        post_crisis_election1 = as.numeric(post_crisis_election1 == "First post-crisis election"),
         crisis_election = as.numeric(
             post_crisis_election2 == "First/Second post-crisis election"
         ), 
@@ -70,7 +83,7 @@ data <- new_parties_data %>%
 restrained_change <- read_dta("data/casal_bertoa_weber_data/restrained_change_repl.dta") %>% 
     as_factor() %>% 
     select(country, year = yearmonth, restraint_pre) %>% 
-    mutate(year = as.numeric(year), 
+    mutate(year = as.numeric(stringr::str_extract(year, "[0-9]{4}")), 
            country = as.character(country)) %>% 
     mutate(country = case_when(
         country == "BUL" ~ "BGR",
@@ -187,17 +200,37 @@ modelsummary(
 )
 
 ## Tab 2 --------------------------------------------------
+m10_pw_nc_a <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+
 m10_pw_nc <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election * restraint_pre_norm,
                         data = data_restrained, 
                         index = c("country_name_short", "year"), 
                         twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
+m10_pw_cv_a <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+
 m10_pw_cv <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election * restraint_pre_norm,
                        data = data_restrained, 
                        index = c("country_name_short", "year"), 
                        twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_a <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 m10_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election * restraint_pre_norm,
                            data = data_restrained, 
@@ -206,9 +239,14 @@ m10_pw_pnp <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election * restrain
     coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
 modelsummary(
-    list("All new parties" = m10_pw_nc, 
-         "Genuinely new parties" = m10_pw_cv, 
-         "Partially new parties" = m10_pw_pnp), 
+    list(
+        "All new parties" = m10_pw_nc_a, 
+        "All new parties" = m10_pw_nc, 
+        "Partially new parties" = m10_pw_pnp_a,
+        "Partially new parties" = m10_pw_pnp,
+        "Genuinely new parties" = m10_pw_cv_a, 
+        "Genuinely new parties" = m10_pw_cv
+         ), 
     coef_rename = c(
         "r_year"="Year (0 = 1991)", 
         "crisis_election"="Two elections after 2008", 
@@ -1104,14 +1142,14 @@ app4_m3c_pw <- prais_winsten(np_share_pnp_1 ~ rank_election_within_country + cri
 PW_NOTE <- "Models estimated using Prais-Winsten regression with panel-corrected standard errors. Models with election order instead of election year."
 modelsummary(
     list("All new parties" = app4_m1a_pw, 
-         "All new parties" = app4_m1b_pw, 
+         # "All new parties" = app4_m1b_pw, 
          "All new parties" = app4_m1c_pw, 
-         "Genuinely new parties" = app4_m2a_pw, 
-         "Genuinely new parties" = app4_m2b_pw, 
-         "Genuinely new parties" = app4_m2c_pw, 
          "Partially new parties" = app4_m3a_pw, 
-         "Partially new parties" = app4_m3b_pw, 
-         "Partially new parties" = app4_m3c_pw), 
+         # "Partially new parties" = app4_m3b_pw, 
+         "Partially new parties" = app4_m3c_pw,
+         "Genuinely new parties" = app4_m2a_pw, 
+         # "Genuinely new parties" = app4_m2b_pw, 
+         "Genuinely new parties" = app4_m2c_pw), 
     coef_rename = c(
         "rank_election_within_country"="Election order",
         "crisis_election3"="Three elections after 2008", 
@@ -1173,13 +1211,13 @@ app5_m3c_pw <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election3 * restra
 PW_NOTE <- "Models estimated using Prais-Winsten regression with panel-corrected standard errors. Models based on data without first and second election in each country."
 modelsummary(
     list("All new parties" = app5_m1a_pw, 
-         "All new parties" = app5_m1b_pw, 
+         # "All new parties" = app5_m1b_pw, 
          "All new parties" = app5_m1c_pw, 
          "Partially new parties" = app5_m3a_pw, 
-         "Partially new parties" = app5_m3b_pw, 
+         # "Partially new parties" = app5_m3b_pw, 
          "Partially new parties" = app5_m3c_pw,
          "Genuinely new parties" = app5_m2a_pw, 
-         "Genuinely new parties" = app5_m2b_pw, 
+         # "Genuinely new parties" = app5_m2b_pw, 
          "Genuinely new parties" = app5_m2c_pw), 
     coef_rename = c(
         "r_year"="Year (0 = 1991)", 
@@ -1192,4 +1230,184 @@ modelsummary(
     gof_map = c("nobs", "r.squared", "adj.r.squared"),
     notes = PW_NOTE,
     output = "figs/app5_tab1.html"
+)
+
+## Tab 2 - crisis 2014 ------------------------------------
+m10_pw_nc_2014a <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election_2014,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_nc_2014 <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election_2014 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv_2014a <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election_2014,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv_2014 <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election_2014 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_2014a <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election_2014,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_2014 <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election_2014 * restraint_pre_norm,
+     data = data_restrained, 
+     index = c("country_name_short", "year"), 
+     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary(
+list(
+    "All new parties" = m10_pw_nc_2014a, 
+    "All new parties" = m10_pw_nc_2014, 
+    "Partially new parties" = m10_pw_pnp_2014a,
+    "Partially new parties" = m10_pw_pnp_2014,
+    "Genuinely new parties" = m10_pw_cv_2014a, 
+    "Genuinely new parties" = m10_pw_cv_2014
+), 
+coef_rename = c(
+"r_year"="Year (0 = 1991)", 
+"crisis_election_2014"="Crisis elections (2009-2014)", 
+"region_typeOnce stable region" = "Once stable region", 
+"restraint_pre_norm" = "Party restraint (pre-crisis)", 
+"crisis_election_2014:restraint_pre_norm" = "Crisis elections (2009-2014) × Party restraint (pre-crisis)"
+),
+stars = TRUE,
+notes = PW_NOTE,
+fmt = 2,
+gof_map = c("nobs", "r.squared", "adj.r.squared"),
+output = "figs/tab2_2014.html"
+)
+
+## Tab 2 - crisis 2015 ------------------------------------
+m10_pw_nc_2015a <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election_2015,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_nc_2015 <- prais_winsten(np_share_nc_1 ~ r_year + crisis_election_2015 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv_2015a <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election_2015,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv_2015 <- prais_winsten(np_share_cv_1 ~ r_year + crisis_election_2015 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_2015a <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election_2015,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_2015 <- prais_winsten(np_share_pnp_1 ~ r_year + crisis_election_2015 * restraint_pre_norm,
+     data = data_restrained, 
+     index = c("country_name_short", "year"), 
+     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary(
+list(
+    "All new parties" = m10_pw_nc_2015a, 
+    "All new parties" = m10_pw_nc_2015, 
+    "Partially new parties" = m10_pw_pnp_2015a, 
+    "Partially new parties" = m10_pw_pnp_2015, 
+    "Genuinely new parties" = m10_pw_cv_2015a, 
+    "Genuinely new parties" = m10_pw_cv_2015
+), 
+coef_rename = c(
+"r_year"="Year (0 = 1991)", 
+"crisis_election_2015"="Crisis elections (2009-2015)", 
+"region_typeOnce stable region" = "Once stable region", 
+"restraint_pre_norm" = "Party restraint (pre-crisis)", 
+"crisis_election_2015:restraint_pre_norm" = "Crisis elections (2009-2015) × Party restraint (pre-crisis)"
+),
+stars = TRUE,
+notes = PW_NOTE,
+fmt = 2,
+gof_map = c("nobs", "r.squared", "adj.r.squared"),
+output = "figs/tab2_2015.html"
+)
+
+## Tab 2 - one election ------------------------------------
+m10_pw_nc_1a <- prais_winsten(np_share_nc_1 ~ r_year + post_crisis_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_nc_1 <- prais_winsten(np_share_nc_1 ~ r_year + post_crisis_election1 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv_1a <- prais_winsten(np_share_cv_1 ~ r_year + post_crisis_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_cv_1 <- prais_winsten(np_share_cv_1 ~ r_year + post_crisis_election1 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_1a <- prais_winsten(np_share_pnp_1 ~ r_year + post_crisis_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+m10_pw_pnp_1 <- prais_winsten(np_share_pnp_1 ~ r_year + post_crisis_election1 * restraint_pre_norm,
+     data = data_restrained, 
+     index = c("country_name_short", "year"), 
+     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary(
+list(
+    "All new parties" = m10_pw_nc_1a, 
+    "All new parties" = m10_pw_nc_1, 
+    "Partially new parties" = m10_pw_pnp_1a, 
+    "Partially new parties" = m10_pw_pnp_1, 
+    "Genuinely new parties" = m10_pw_cv_1a, 
+    "Genuinely new parties" = m10_pw_cv_1
+), 
+coef_rename = c(
+"r_year"="Year (0 = 1991)", 
+"post_crisis_election1"="First election after crisis", 
+"region_typeOnce stable region" = "Once stable region", 
+"restraint_pre_norm" = "Party restraint (pre-crisis)", 
+"post_crisis_election1:restraint_pre_norm" = "First election after crisis × Party restraint (pre-crisis)"
+),
+stars = TRUE,
+notes = PW_NOTE,
+fmt = 2,
+gof_map = c("nobs", "r.squared", "adj.r.squared"),
+output = "figs/tab2_1election.html"
 )
