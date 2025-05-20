@@ -23,6 +23,13 @@ data <- new_parties_data %>%
     mutate(year = as.numeric(stringr::str_extract(country_year, "[0-9]+")), 
            country_name_short = stringr::str_extract(country_year, "[A-Z]+"),
            post_crisis = as.numeric(year > 2008),
+           post_accession = case_when(
+            country_name_short %in% c("CZE", "EST", "LTU", "LVA", "POL", "HUN", "SVK", "SVN") &
+                year >= 2004 ~ 1,
+            country_name_short %in% c("BGR", "ROU") & year >= 2007 ~ 1,
+            country_name_short == "HRV" & year >= 2013 ~ 1,
+            TRUE ~ 0
+           ),
            crisis_election_2016 = as.numeric(year > 2008 & year <= 2016),
            crisis_election_2014 = as.numeric(year > 2008 & year <= 2014), 
            crisis_election_2015 = as.numeric(year > 2008 & year <= 2015),
@@ -52,12 +59,24 @@ data <- new_parties_data %>%
             post_crisis == 1 & row_number() %in% 1:3~ "1-3 post-crisis election", 
             post_crisis == 1 ~ "Other post-crisis election"
         ),
-        time_2008 = row_number()
+        time_2008 = row_number(), 
+        post_accession_election1 = case_when(
+            post_accession == 0 ~ "Before accession", 
+            post_accession == 1 & row_number() == 1 ~ "First post-accession election", 
+            post_accession == 1 ~ "Other post-accession election"
+        ),
+        post_accession_election2 = case_when(
+            post_accession == 0 ~ "Before accession", 
+            post_accession == 1 & row_number() %in% 1:2 ~ "First/second post-accession election", 
+            post_accession == 1 ~ "Other post-accession election"
+        )
     ) %>% 
     ungroup %>% 
     mutate(
         r_year = year - 1991, 
         post_crisis_election1 = as.numeric(post_crisis_election1 == "First post-crisis election"),
+        post_accession_election1 = as.numeric(post_accession_election1 == "First post-accession election"),
+        post_accession_election2 = as.numeric(post_accession_election2 == "First/second post-accession election"),
         crisis_election = as.numeric(
             post_crisis_election2 == "First/Second post-crisis election"
         ), 
@@ -1410,4 +1429,79 @@ notes = PW_NOTE,
 fmt = 2,
 gof_map = c("nobs", "r.squared", "adj.r.squared"),
 output = "figs/tab2_1election.html"
+)
+
+## Tab 2 - one election after accession ------------------------------------
+eu_pw_nc_1a <- prais_winsten(np_share_nc_1 ~ r_year + post_accession_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+eu_pw_cv_1a <- prais_winsten(np_share_cv_1 ~ r_year + post_accession_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+eu_pw_pnp_1a <- prais_winsten(np_share_pnp_1 ~ r_year + post_accession_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary(
+list(
+    "All new parties" = eu_pw_nc_1a, 
+    "Partially new parties" = eu_pw_pnp_1a, 
+    "Genuinely new parties" = eu_pw_cv_1a
+), 
+coef_rename = c(
+"r_year"="Year (0 = 1991)", 
+"post_accession_election1"="First election after EU accession", 
+"restraint_pre_norm" = "Party restraint (pre-crisis)", 
+"post_accession_election1:restraint_pre_norm" = "First election after EU accession × Party restraint (pre-crisis)"
+),
+stars = TRUE,
+notes = PW_NOTE,
+fmt = 2,
+gof_map = c("nobs", "r.squared", "adj.r.squared"),
+output = "figs/tab3_eu_1election.html"
+)
+
+## Tab 2 - two elections after accession ------------------------------------
+eu_pw_nc_2a <- prais_winsten(np_share_nc_1 ~ r_year + post_accession_election2,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+eu_pw_cv_2a <- prais_winsten(np_share_cv_1 ~ r_year + post_accession_election2,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+eu_pw_pnp_2a <- prais_winsten(np_share_pnp_1 ~ r_year + post_accession_election2,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+modelsummary(
+list(
+    "All new parties" = eu_pw_nc_2a, 
+    "Partially new parties" = eu_pw_pnp_2a, 
+    "Genuinely new parties" = eu_pw_cv_2a
+), 
+coef_rename = c(
+"r_year"="Year (0 = 1991)", 
+"post_accession_election2"="Two elections after EU accession", 
+"restraint_pre_norm" = "Party restraint (pre-crisis)"
+),
+stars = TRUE,
+notes = PW_NOTE,
+fmt = 2,
+gof_map = c("nobs", "r.squared", "adj.r.squared"),
+output = "figs/tab3_eu_2election.html"
 )

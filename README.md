@@ -7,7 +7,7 @@ To replicate the results, run the scripts in the following order:
 - `models.R` - estimate models
 - `wcn.R` - calculate average WCN (weighted candidate novelty) for genuinely and partially new parties
 
-The dataset containing the list of new parties is stored in `data/new_parties_final.xlsx`. It contains the following variables:  
+The dataset containing the list of new parties is stored in `data/new_parties_list.xlsx`. It contains the following variables:  
 - `country_name_short` - country  
 - `election_year` - year of elections  
 - `party_name_short` - party abbreviation  
