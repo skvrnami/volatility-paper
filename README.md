@@ -1,5 +1,7 @@
 # README
 
+Replication materials: Linek, L., & Škvrňák, M. (2025). Development of new party support in post-communist Europe and the effect of the 2008 economic crisis. _East European Politics_, 1–19. [https://doi.org/10.1080/21599165.2025.2513870](https://doi.org/10.1080/21599165.2025.2513870)
+
 To replicate the results, run the scripts in the following order:
 
 - `prepare_data.R` - prepare data

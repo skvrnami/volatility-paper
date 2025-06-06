@@ -1438,7 +1438,19 @@ eu_pw_nc_1a <- prais_winsten(np_share_nc_1 ~ r_year + post_accession_election1,
     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
 coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
+eu_pw_nc_1b <- prais_winsten(np_share_nc_1 ~ r_year + post_accession_election1 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 eu_pw_cv_1a <- prais_winsten(np_share_cv_1 ~ r_year + post_accession_election1,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+eu_pw_cv_1b <- prais_winsten(np_share_cv_1 ~ r_year + post_accession_election1 * restraint_pre_norm,
     data = data_restrained, 
     index = c("country_name_short", "year"), 
     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
@@ -1450,11 +1462,20 @@ eu_pw_pnp_1a <- prais_winsten(np_share_pnp_1 ~ r_year + post_accession_election1
     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
 coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
+eu_pw_pnp_1b <- prais_winsten(np_share_pnp_1 ~ r_year + post_accession_election1 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 modelsummary(
 list(
     "All new parties" = eu_pw_nc_1a, 
+    "All new parties" = eu_pw_nc_1b, 
     "Partially new parties" = eu_pw_pnp_1a, 
-    "Genuinely new parties" = eu_pw_cv_1a
+    "Partially new parties" = eu_pw_pnp_1b, 
+    "Genuinely new parties" = eu_pw_cv_1a, 
+    "Genuinely new parties" = eu_pw_cv_1b
 ), 
 coef_rename = c(
 "r_year"="Year (0 = 1991)", 
@@ -1476,7 +1497,19 @@ eu_pw_nc_2a <- prais_winsten(np_share_nc_1 ~ r_year + post_accession_election2,
     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
 coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
+eu_pw_nc_2b <- prais_winsten(np_share_nc_1 ~ r_year + post_accession_election2 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 eu_pw_cv_2a <- prais_winsten(np_share_cv_1 ~ r_year + post_accession_election2,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
+eu_pw_cv_2b <- prais_winsten(np_share_cv_1 ~ r_year + post_accession_election2 * restraint_pre_norm,
     data = data_restrained, 
     index = c("country_name_short", "year"), 
     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
@@ -1488,16 +1521,26 @@ eu_pw_pnp_2a <- prais_winsten(np_share_pnp_1 ~ r_year + post_accession_election2
     twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
 coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
 
+eu_pw_pnp_2b <- prais_winsten(np_share_pnp_1 ~ r_year + post_accession_election2 * restraint_pre_norm,
+    data = data_restrained, 
+    index = c("country_name_short", "year"), 
+    twostep = TRUE, panelwise = TRUE, rhoweight = "T1") %>% 
+coeftest(., vcov. = vcovPC(., pairwise = TRUE), save = TRUE)
+
 modelsummary(
 list(
     "All new parties" = eu_pw_nc_2a, 
+    "All new parties" = eu_pw_nc_2b, 
     "Partially new parties" = eu_pw_pnp_2a, 
-    "Genuinely new parties" = eu_pw_cv_2a
+    "Partially new parties" = eu_pw_pnp_2b, 
+    "Genuinely new parties" = eu_pw_cv_2a,
+    "Genuinely new parties" = eu_pw_cv_2b
 ), 
 coef_rename = c(
 "r_year"="Year (0 = 1991)", 
 "post_accession_election2"="Two elections after EU accession", 
-"restraint_pre_norm" = "Party restraint (pre-crisis)"
+"restraint_pre_norm" = "Party restraint (pre-crisis)", 
+"post_accession_election2:restraint_pre_norm" = "Two elections after EU accession × Party restraint (pre-crisis)"
 ),
 stars = TRUE,
 notes = PW_NOTE,
